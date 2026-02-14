@@ -4,13 +4,13 @@ pub async fn pick_file() -> Option<PathBuf> {
     rfd::AsyncFileDialog::new()
         .pick_file()
         .await
-        .map(|file| file.path().to_path_buf())
+        .map(|f| f.path().to_path_buf())
 }
 pub async fn pick_folder() -> Option<PathBuf> {
     rfd::AsyncFileDialog::new()
         .pick_folder()
         .await
-        .map(|file| file.path().to_path_buf())
+        .map(|f| f.path().to_path_buf())
 }
 
 /// returns a path with a different filename
