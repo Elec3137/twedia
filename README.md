@@ -1,4 +1,4 @@
-# media-tweak
+# twedia
 
 A GUI to losslessly mess with media files
 
@@ -10,7 +10,7 @@ Currently only packaged with `nix`
 This will compile the program if
 it cannot find it in your configured binary caches
 ```sh
-nix profile install github:Elec3137/media-tweak
+nix profile install github:Elec3137/twedia
 ```
 
 If you have a local copy of the repo you want to use,
@@ -23,8 +23,8 @@ nix profile install .
 
 The prefered way to develop is with `direnv` (`nix`) and `cargo`;
 ```sh
-git clone https://github.com/Elec3137/media-tweak
-cd media-tweak
+git clone https://github.com/Elec3137/twedia
+cd twedia
 direnv allow
 cargo build # do your thing
 ```

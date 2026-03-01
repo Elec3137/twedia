@@ -1678,16 +1678,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "media-tweak"
-version = "0.1.0"
-dependencies = [
- "ffmpeg-next",
- "iced",
- "rfd",
- "smol",
-]
-
-[[package]]
 name = "memchr"
 version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3162,6 +3152,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2df906b07856748fa3f6e0ad0cbaa047052d4a7dd609e231c4f72cee8c36f31"
 dependencies = [
  "core_maths",
+]
+
+[[package]]
+name = "twedia"
+version = "0.1.0"
+dependencies = [
+ "ffmpeg-next",
+ "iced",
+ "rfd",
+ "smol",
 ]
 
 [[package]]
