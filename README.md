@@ -1,6 +1,6 @@
 # twedia
 
-A GUI to losslessly mess with media files
+GUI to losslessly mess with media files
 
 Currently only packaged with `nix`
 
