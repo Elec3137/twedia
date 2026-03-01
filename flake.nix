@@ -39,9 +39,9 @@
 
             wayland
 
-            xorg.libX11
-            xorg.libXcursor
-            xorg.libXi
+            libx11
+            libxcursor
+            libxi
           ];
         };
 
