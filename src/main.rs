@@ -461,15 +461,16 @@ impl State {
 
         self.input_length = self.media.update_video_params()?;
 
-        // Set the end to the duration of the video
-        self.end = self.input_length;
-
-        // Generate a template output path if there is none from user input
-        if self.media.output.is_empty() || self.output_is_generated {
-            Ok(self.generate_output_path())
-        } else {
-            Ok(Task::none())
-        }
+        Ok(Task::batch([
+            // Set the end to the duration of the video
+            Task::done(Message::EndChange(self.input_length)),
+            if self.media.output.is_empty() || self.output_is_generated {
+                // Generate a output path if there is none from user input
+                self.generate_output_path()
+            } else {
+                Task::none()
+            },
+        ]))
     }
 
     fn generate_output_path(&mut self) -> Task<Message> {
