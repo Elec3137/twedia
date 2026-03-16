@@ -250,7 +250,7 @@ impl State {
                         Key::Character("e") => return Task::done(Message::ToggleExtraStreams),
 
                         // early-exit hotkeys
-                        Key::Named(key::Named::Escape) | Key::Character("q") => {
+                        Key::Character("q") => {
                             return window::latest().and_then(window::close);
                         }
 
