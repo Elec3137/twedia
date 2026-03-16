@@ -11,11 +11,7 @@ use iced::{
     color, event,
     keyboard::{self, Key, key},
     task::{self},
-    widget::{
-        Image, button, checkbox, column, image,
-        operation::{self, focus_next},
-        row, slider, text, text_input,
-    },
+    widget::{Image, button, checkbox, column, image, operation, row, slider, text, text_input},
     window,
 };
 
@@ -182,7 +178,7 @@ impl State {
                 }
             }
 
-            Message::Submitted => return Task::batch([focus_next(), self.check_inputs()]),
+            Message::Submitted => return self.check_inputs(),
             Message::Update => return self.check_inputs(),
 
             Message::ToggleVideo => self.media.use_video = !self.media.use_video,
@@ -261,8 +257,6 @@ impl State {
                         Key::Named(key::Named::Enter) => {
                             if modifiers.shift() {
                                 return Task::done(Message::Instantiate);
-                            } else {
-                                return focus_next();
                             }
                         }
 
