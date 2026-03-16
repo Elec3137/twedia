@@ -1,0 +1,11 @@
+version = 1
+
+[[annotations]]
+path = "*"
+SPDX-FileCopyrightText = "2026 Electria"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+[[annotations]]
+path = "src/*"
+SPDX-FileCopyrightText = "2026 Electria"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
