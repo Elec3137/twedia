@@ -47,6 +47,9 @@ enum Message {
     LoadedStartPreview(Result<(widget::image::Handle, u64), PreviewError>),
     LoadedEndPreview(Result<(widget::image::Handle, u64), PreviewError>),
 
+    AllocatedStartPreview(Result<widget::image::Allocation, widget::image::Error>),
+    AllocatedEndPreview(Result<widget::image::Allocation, widget::image::Error>),
+
     Event(Event),
 
     Instantiate,
@@ -71,11 +74,14 @@ struct State {
     last_start_preview_hash: u64,
     last_end_preview_hash: u64,
 
-    start_preview: Option<widget::image::Handle>,
-    end_preview: Option<widget::image::Handle>,
+    start_preview: Option<widget::image::Allocation>,
+    end_preview: Option<widget::image::Allocation>,
 
     start_preview_task_handle: Option<task::Handle>,
     end_preview_task_handle: Option<task::Handle>,
+
+    start_preview_allocation_task_handle: Option<task::Handle>,
+    end_preview_allocation_task_handle: Option<task::Handle>,
 
     output_is_generated: bool,
     output_folder_exists: bool,
@@ -189,16 +195,44 @@ impl State {
 
             Message::LoadedStartPreview(Ok((handle, hash))) => {
                 self.last_start_preview_hash = hash;
-                self.start_preview = Some(handle)
+
+                let (task, handle) = widget::image::allocate(handle)
+                    .map(Message::AllocatedStartPreview)
+                    .abortable();
+
+                if let Some(handle) = &self.start_preview_allocation_task_handle {
+                    handle.abort();
+                }
+
+                self.start_preview_allocation_task_handle = Some(handle);
+
+                return task;
             }
             Message::LoadedEndPreview(Ok((handle, hash))) => {
                 self.last_end_preview_hash = hash;
-                self.end_preview = Some(handle)
+
+                let (task, handle) = widget::image::allocate(handle)
+                    .map(Message::AllocatedEndPreview)
+                    .abortable();
+
+                if let Some(handle) = &self.end_preview_allocation_task_handle {
+                    handle.abort();
+                }
+
+                self.end_preview_allocation_task_handle = Some(handle);
+
+                return task;
             }
             Message::LoadedStartPreview(Err(e)) | Message::LoadedEndPreview(Err(e)) => {
                 if e != PreviewError::SameHash {
-                    eprintln!("{e}")
+                    eprintln!("failed to load preview: {e}")
                 }
+            }
+
+            Message::AllocatedStartPreview(Ok(allocation)) => self.start_preview = Some(allocation),
+            Message::AllocatedEndPreview(Ok(allocation)) => self.end_preview = Some(allocation),
+            Message::AllocatedStartPreview(Err(e)) | Message::AllocatedEndPreview(Err(e)) => {
+                eprintln!("failed to allocate preview: {e}")
             }
 
             Message::Event(event) => {
@@ -340,14 +374,14 @@ impl State {
             .label("extra streams");
 
         let preview_row = if self.media.use_video
-            && let Some(h_start) = self.start_preview.clone()
-            && let Some(h_end) = self.end_preview.clone()
+            && let Some(start) = self.start_preview.clone()
+            && let Some(end) = self.end_preview.clone()
         {
             widget::row![
-                widget::image(h_start)
+                widget::image(start.handle())
                     .width(Length::Fill)
                     .height(Length::Fill),
-                widget::image(h_end)
+                widget::image(end.handle())
                     .width(Length::Fill)
                     .height(Length::Fill)
             ]
@@ -514,9 +548,11 @@ impl State {
                     Message::LoadedStartPreview,
                 )
                 .abortable();
-                if let Some(extra_handle) = &self.start_preview_task_handle {
-                    extra_handle.abort();
+
+                if let Some(handle) = &self.start_preview_task_handle {
+                    handle.abort();
                 }
+
                 self.start_preview_task_handle = Some(handle);
 
                 task
@@ -531,9 +567,11 @@ impl State {
                     Message::LoadedEndPreview,
                 )
                 .abortable();
-                if let Some(extra_handle) = &self.end_preview_task_handle {
-                    extra_handle.abort();
+
+                if let Some(handle) = &self.end_preview_task_handle {
+                    handle.abort();
                 }
+
                 self.end_preview_task_handle = Some(handle);
 
                 task
