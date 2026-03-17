@@ -11,8 +11,7 @@ use iced::{
     color, event,
     keyboard::{self, Key, key},
     task::{self},
-    widget::{Image, button, checkbox, column, image, operation, row, slider, text, text_input},
-    window,
+    widget, window,
 };
 
 mod paths;
@@ -45,8 +44,8 @@ enum Message {
 
     Update,
 
-    LoadedStartPreview(Result<(image::Handle, u64), PreviewError>),
-    LoadedEndPreview(Result<(image::Handle, u64), PreviewError>),
+    LoadedStartPreview(Result<(widget::image::Handle, u64), PreviewError>),
+    LoadedEndPreview(Result<(widget::image::Handle, u64), PreviewError>),
 
     Event(Event),
 
@@ -72,8 +71,8 @@ struct State {
     last_start_preview_hash: u64,
     last_end_preview_hash: u64,
 
-    start_preview: Option<image::Handle>,
-    end_preview: Option<image::Handle>,
+    start_preview: Option<widget::image::Handle>,
+    end_preview: Option<widget::image::Handle>,
 
     start_preview_task_handle: Option<task::Handle>,
     end_preview_task_handle: Option<task::Handle>,
@@ -208,9 +207,9 @@ impl State {
                         // input field cycling
                         Key::Named(key::Named::Tab) => {
                             if modifiers.shift() {
-                                return operation::focus_previous();
+                                return widget::operation::focus_previous();
                             } else {
-                                return operation::focus_next();
+                                return widget::operation::focus_next();
                             }
                         }
 
@@ -283,61 +282,60 @@ impl State {
     }
 
     fn view(&self) -> Element<'_, Message> {
-        let input_field = text_input("input file", &self.media.input)
+        let input_field = widget::text_input("input file", &self.media.input)
             .on_input(Message::InputChange)
             .on_submit(Message::Submitted);
-        let input_picker =
-            button("pick file")
-                .on_press(Message::PickInput)
-                .style(if self.input_exists {
-                    button::primary
-                } else {
-                    button::warning
-                });
+        let input_picker = widget::button("pick file")
+            .on_press(Message::PickInput)
+            .style(if self.input_exists {
+                widget::button::primary
+            } else {
+                widget::button::warning
+            });
 
-        let start_slider = slider(
+        let start_slider = widget::slider(
             0_f64..=self.end - 1.0,
             self.media.start,
             Message::EagerStartChange,
         )
         .default(0);
-        let start_field = text_input("start", &self.media.start.to_string())
+        let start_field = widget::text_input("start", &self.media.start.to_string())
             .on_input(|str| Message::StartChange(str.parse().unwrap_or_default()))
             .width(200)
             .on_submit(Message::Submitted);
 
-        let end_slider = slider(
+        let end_slider = widget::slider(
             self.media.start + 1.0..=self.input_length,
             self.end,
             Message::EagerEndChange,
         )
         .default(self.input_length);
-        let end_field = text_input("end", &self.end.to_string())
+        let end_field = widget::text_input("end", &self.end.to_string())
             .on_input(|str| Message::EndChange(str.parse().unwrap_or_default()))
             .width(200)
             .on_submit(Message::Submitted);
 
-        let output_field = text_input("output file", &self.media.output)
+        let output_field = widget::text_input("output file", &self.media.output)
             .on_input(|str| Message::OutputChange(str, false))
             .on_submit(Message::Submitted);
-        let output_picker = button("pick folder").on_press(Message::PickOutput).style(
-            if self.output_folder_exists {
-                button::primary
+        let output_picker = widget::button("pick folder")
+            .on_press(Message::PickOutput)
+            .style(if self.output_folder_exists {
+                widget::button::primary
             } else {
-                button::warning
-            },
-        );
+                widget::button::warning
+            });
 
-        let video_checkbox = checkbox(self.media.use_video)
+        let video_checkbox = widget::checkbox(self.media.use_video)
             .on_toggle(|_| Message::ToggleVideo)
             .label("video");
-        let audio_checkbox = checkbox(self.media.use_audio)
+        let audio_checkbox = widget::checkbox(self.media.use_audio)
             .on_toggle(|_| Message::ToggleAudio)
             .label("audio");
-        let subs_checkbox = checkbox(self.media.use_subs)
+        let subs_checkbox = widget::checkbox(self.media.use_subs)
             .on_toggle(|_| Message::ToggleSubs)
             .label("subtitles");
-        let extra_streams_checkbox = checkbox(self.media.use_extra_streams)
+        let extra_streams_checkbox = widget::checkbox(self.media.use_extra_streams)
             .on_toggle(|_| Message::ToggleExtraStreams)
             .label("extra streams");
 
@@ -345,50 +343,50 @@ impl State {
             && let Some(h_start) = self.start_preview.clone()
             && let Some(h_end) = self.end_preview.clone()
         {
-            row![
-                Image::<image::Handle>::new(h_start)
+            widget::row![
+                widget::image(h_start)
                     .width(Length::Fill)
                     .height(Length::Fill),
-                Image::<image::Handle>::new(h_end)
+                widget::image(h_end)
                     .width(Length::Fill)
                     .height(Length::Fill)
             ]
         } else {
-            row![]
+            widget::row![]
         };
 
         let status_display = if !self.error.is_empty() {
-            row![text(&self.error).style(text::danger)]
+            widget::row![widget::text(&self.error).style(widget::text::danger)]
         } else if !self.status.is_empty() {
-            row![text(&self.status).style(text::primary)]
+            widget::row![widget::text(&self.status).style(widget::text::primary)]
         } else {
-            row![]
+            widget::row![]
         };
 
-        let instantiate_button = button("Instantiate!").on_press(Message::Instantiate);
+        let instantiate_button = widget::button("Instantiate!").on_press(Message::Instantiate);
         let duration_string = format!("Duration: {} seconds", self.media.dur);
 
         #[rustfmt::skip]
-        return column![
-            row![input_field, input_picker],
+        return widget::column![
+            widget::row![input_field, input_picker],
 
-            row![text("Start time (seconds):  "), start_field, start_slider]
+            widget::row![widget::text("Start time (seconds):  "), start_field, start_slider]
                 .align_y(Vertical::Center),
 
-            row![text("End time (seconds):    "), end_field, end_slider]
+            widget::row![widget::text("End time (seconds):    "), end_field, end_slider]
                 .align_y(Vertical::Center),
 
-            row![video_checkbox, audio_checkbox, subs_checkbox, extra_streams_checkbox]
+            widget::row![video_checkbox, audio_checkbox, subs_checkbox, extra_streams_checkbox]
                 .spacing(100)
                 .align_y(Vertical::Center),
 
-            row![output_field, output_picker],
+            widget::row![output_field, output_picker],
 
             preview_row,
 
             status_display,
 
-            row![text("Press Shift-Enter, or:"), instantiate_button, text(duration_string)]
+            widget::row![widget::text("Press Shift-Enter, or:"), instantiate_button, widget::text(duration_string)]
                 .spacing(10)
                 .align_y(Vertical::Center)
         ]
