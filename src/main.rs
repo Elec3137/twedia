@@ -15,8 +15,8 @@ use iced::{
     window,
 };
 
-mod fs;
-use fs::*;
+mod paths;
+use paths::*;
 
 mod media;
 use media::*;
