@@ -124,7 +124,7 @@ impl State {
                 if let Some(path) = Path::new(&self.media.output).parent()
                     && let Ok(exists) = path
                         .try_exists()
-                        .inspect_err(|e| eprintln!("failed to check if input exists: {e}"))
+                        .inspect_err(|e| eprintln!("failed to check if output path exists: {e}"))
                 {
                     self.output_folder_exists = exists;
                 }
