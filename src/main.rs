@@ -1,5 +1,5 @@
 use std::{
-    env,
+    env, fs, io,
     path::{Path, PathBuf},
 };
 
@@ -109,13 +109,13 @@ impl State {
             Message::InputChange(str) => {
                 self.media.input = str;
                 self.input_changed = true;
-                if let Ok(exists) = Path::new(&self.media.input).try_exists().inspect_err(|e| {
-                    eprintln!(
+                match fs::metadata(&self.media.input) {
+                    Ok(metadata) => self.input_exists = metadata.is_file(),
+                    Err(e) if e.kind() == io::ErrorKind::NotFound => self.input_exists = false,
+                    Err(e) => eprintln!(
                         "failed to check if input '{}' exists: {e}",
                         self.media.input
-                    )
-                }) {
-                    self.input_exists = exists;
+                    ),
                 }
             }
             Message::OutputChange(str, is_generated) => {
