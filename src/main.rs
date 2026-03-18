@@ -374,8 +374,8 @@ impl State {
             .label("extra streams");
 
         let preview_row = if self.media.use_video
-            && let Some(start) = self.start_preview.clone()
-            && let Some(end) = self.end_preview.clone()
+            && let Some(start) = &self.start_preview
+            && let Some(end) = &self.end_preview
         {
             widget::row![
                 widget::image(start.handle())
