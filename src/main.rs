@@ -454,7 +454,10 @@ impl State {
             }
 
             self.input_changed = false;
-        } else if self.media.output.is_empty() && !self.output_is_generated {
+        } else if self.media.output.is_empty()
+            && !self.output_is_generated
+            && !self.media.input.is_empty()
+        {
             tasks.push(self.generate_output_path());
         }
 
