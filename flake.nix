@@ -5,6 +5,12 @@
     crane.url = "github:ipetkov/crane";
 
     flake-utils.url = "github:numtide/flake-utils";
+
+    nix2flatpak = {
+      url = "github:neobrain/nix2flatpak";
+      inputs.nixpkgs.follows = "nixpkgs";
+      inputs.flake-utils.follows = "flake-utils";
+    };
   };
 
   outputs =
@@ -14,6 +20,9 @@
       let
         pkgs = import inputs.nixpkgs { inherit system; };
         craneLib = inputs.crane.mkLib pkgs;
+
+        cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
+        name = cargoToml.package.name;
 
         commonArgs = {
           src = craneLib.cleanCargoSource ./.;
@@ -53,10 +62,10 @@
           // rec {
             inherit cargoArtifacts;
 
-            pname = (fromTOML (builtins.readFile ./Cargo.toml)).package.name;
+            inherit name;
             desktopItem = pkgs.makeDesktopItem {
-              name = pname;
-              desktopName = pname;
+              inherit name;
+              desktopName = name;
               mimeTypes = [
                 "video/matroshka"
                 "video/webm"
@@ -71,14 +80,14 @@
                 "audio/ogg"
               ];
               icon = "image-x-generic";
-              exec = pname;
+              exec = name;
             };
 
             postFixup = ''
               mkdir -p "$out/share/applications"
               ln -s "${desktopItem}"/share/applications/* "$out/share/applications/"
 
-              wrapProgram $out/bin/${pname} \
+              wrapProgram $out/bin/${name} \
                 --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg ]} \
                 --prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}
             '';
@@ -87,6 +96,16 @@
       in
       {
         packages.default = crate;
+
+        packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
+          appId = "moe.pancake.${name}";
+          package = crate;
+          runtime = "org.gnome.Platform/49";
+          permissions.sockets = [
+            "fallback-x11"
+            "wayland"
+          ];
+        };
 
         checks = {
           # Build the crate as part of `nix flake check` for convenience

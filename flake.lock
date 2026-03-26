@@ -33,6 +33,29 @@
         "type": "github"
       }
     },
+    "nix2flatpak": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1773751765,
+        "narHash": "sha256-ksSfcMZOYdkHKiOxhYosgl7fqNOb9a6qp5szCPJK2Jo=",
+        "owner": "neobrain",
+        "repo": "nix2flatpak",
+        "rev": "8e4029b7f1fd085c84258a81d7ab0c0cdc0cbeb5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "neobrain",
+        "repo": "nix2flatpak",
+        "type": "github"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1772173633,
@@ -53,6 +76,7 @@
       "inputs": {
         "crane": "crane",
         "flake-utils": "flake-utils",
+        "nix2flatpak": "nix2flatpak",
         "nixpkgs": "nixpkgs"
       }
     },
