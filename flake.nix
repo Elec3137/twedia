@@ -8,17 +8,12 @@
   };
 
   outputs =
-    {
-      nixpkgs,
-      crane,
-      flake-utils,
-      ...
-    }:
-    flake-utils.lib.eachDefaultSystem (
+    inputs:
+    inputs.flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import nixpkgs { inherit system; };
-        craneLib = crane.mkLib pkgs;
+        pkgs = import inputs.nixpkgs { inherit system; };
+        craneLib = inputs.crane.mkLib pkgs;
 
         commonArgs = {
           src = craneLib.cleanCargoSource ./.;
