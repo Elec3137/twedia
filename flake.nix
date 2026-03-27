@@ -19,6 +19,7 @@
       system:
       let
         pkgs = import inputs.nixpkgs { inherit system; };
+        lib = pkgs.lib;
         craneLib = inputs.crane.mkLib pkgs;
 
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
@@ -49,7 +50,7 @@
           ];
         };
 
-        LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath commonArgs.buildInputs;
+        LD_LIBRARY_PATH = lib.makeLibraryPath commonArgs.buildInputs;
 
         # Build *just* the cargo dependencies, so we can reuse
         # all of that work (e.g. via cachix) when running in CI
@@ -57,12 +58,8 @@
 
         # Build the actual crate itself, reusing the dependency
         # artifacts from above.
-        crate = craneLib.buildPackage (
-          commonArgs
-          // rec {
-            inherit cargoArtifacts;
-
-            inherit name;
+        crate =
+          let
             desktopItem = pkgs.makeDesktopItem {
               inherit name;
               desktopName = name;
@@ -82,17 +79,22 @@
               icon = "image-x-generic";
               exec = name;
             };
+          in
+          craneLib.buildPackage (
+            commonArgs
+            // {
+              inherit cargoArtifacts;
 
-            postFixup = ''
-              mkdir -p "$out/share/applications"
-              ln -s "${desktopItem}"/share/applications/* "$out/share/applications/"
+              postFixup = ''
+                mkdir -p "$out/share/applications"
+                ln -s "${desktopItem}"/share/applications/* "$out/share/applications/"
 
-              wrapProgram $out/bin/${name} \
-                --prefix PATH : ${pkgs.lib.makeBinPath [ pkgs.ffmpeg ]} \
-                --prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}
-            '';
-          }
-        );
+                wrapProgram $out/bin/${name} \
+                  --prefix PATH : ${lib.makeBinPath [ pkgs.ffmpeg ]} \
+                  --prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}
+              '';
+            }
+          );
       in
       {
         packages.default = crate;
