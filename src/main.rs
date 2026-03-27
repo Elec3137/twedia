@@ -282,6 +282,13 @@ impl State {
                         Key::Character("s") => return Task::done(Message::ToggleSubs),
                         Key::Character("e") => return Task::done(Message::ToggleExtraStreams),
 
+                        Key::Character("i") | Key::Character("f") => {
+                            return Task::done(Message::PickInput);
+                        }
+                        Key::Character("o") | Key::Character("d") => {
+                            return Task::done(Message::PickOutput);
+                        }
+
                         // early-exit hotkeys
                         Key::Character("q") => {
                             return window::latest().and_then(window::close);
