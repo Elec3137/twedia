@@ -57,6 +57,24 @@ enum Message {
 }
 
 #[derive(Debug, Default)]
+struct PreviewState {
+    last_start: Preview,
+    last_end: Preview,
+
+    last_start_hash: u64,
+    last_end_hash: u64,
+
+    start: Option<widget::image::Allocation>,
+    end: Option<widget::image::Allocation>,
+
+    start_task_handle: Option<task::Handle>,
+    end_task_handle: Option<task::Handle>,
+
+    start_allocation_task_handle: Option<task::Handle>,
+    end_allocation_task_handle: Option<task::Handle>,
+}
+
+#[derive(Debug, Default)]
 struct State {
     media: Media,
 
@@ -68,20 +86,7 @@ struct State {
     end: f64,
     number_changed: bool,
 
-    last_start_preview: Preview,
-    last_end_preview: Preview,
-
-    last_start_preview_hash: u64,
-    last_end_preview_hash: u64,
-
-    start_preview: Option<widget::image::Allocation>,
-    end_preview: Option<widget::image::Allocation>,
-
-    start_preview_task_handle: Option<task::Handle>,
-    end_preview_task_handle: Option<task::Handle>,
-
-    start_preview_allocation_task_handle: Option<task::Handle>,
-    end_preview_allocation_task_handle: Option<task::Handle>,
+    previews: PreviewState,
 
     output_is_generated: bool,
     output_folder_exists: bool,
@@ -194,32 +199,32 @@ impl State {
             }
 
             Message::LoadedStartPreview(Ok((handle, hash))) => {
-                self.last_start_preview_hash = hash;
+                self.previews.last_start_hash = hash;
 
                 let (task, handle) = widget::image::allocate(handle)
                     .map(Message::AllocatedStartPreview)
                     .abortable();
 
-                if let Some(handle) = &self.start_preview_allocation_task_handle {
+                if let Some(handle) = &self.previews.start_allocation_task_handle {
                     handle.abort();
                 }
 
-                self.start_preview_allocation_task_handle = Some(handle);
+                self.previews.start_allocation_task_handle = Some(handle);
 
                 return task;
             }
             Message::LoadedEndPreview(Ok((handle, hash))) => {
-                self.last_end_preview_hash = hash;
+                self.previews.last_end_hash = hash;
 
                 let (task, handle) = widget::image::allocate(handle)
                     .map(Message::AllocatedEndPreview)
                     .abortable();
 
-                if let Some(handle) = &self.end_preview_allocation_task_handle {
+                if let Some(handle) = &self.previews.end_allocation_task_handle {
                     handle.abort();
                 }
 
-                self.end_preview_allocation_task_handle = Some(handle);
+                self.previews.end_allocation_task_handle = Some(handle);
 
                 return task;
             }
@@ -229,8 +234,10 @@ impl State {
                 }
             }
 
-            Message::AllocatedStartPreview(Ok(allocation)) => self.start_preview = Some(allocation),
-            Message::AllocatedEndPreview(Ok(allocation)) => self.end_preview = Some(allocation),
+            Message::AllocatedStartPreview(Ok(allocation)) => {
+                self.previews.start = Some(allocation)
+            }
+            Message::AllocatedEndPreview(Ok(allocation)) => self.previews.end = Some(allocation),
             Message::AllocatedStartPreview(Err(e)) | Message::AllocatedEndPreview(Err(e)) => {
                 eprintln!("failed to allocate preview: {e}")
             }
@@ -382,8 +389,8 @@ impl State {
             .label("extra streams");
 
         let preview_row = if self.media.use_video
-            && let Some(start) = &self.start_preview
-            && let Some(end) = &self.end_preview
+            && let Some(start) = &self.previews.start
+            && let Some(end) = &self.previews.end
         {
             widget::row![
                 widget::image(start.handle())
@@ -535,12 +542,12 @@ impl State {
             return Task::none();
         }
 
-        let start_preview = Preview {
+        let start = Preview {
             seek: (self.media.start * 1_000_000.0).round() as i64,
             input: self.media.input.clone(),
-            prev_hash: self.last_start_preview_hash,
+            prev_hash: self.previews.last_start_hash,
         };
-        let end_preview = Preview {
+        let end = Preview {
             seek: // seek slightly before the end of the video to get a frame
                 (if self.end > self.input_length - 0.1 {
                     self.end - 0.5
@@ -548,45 +555,41 @@ impl State {
                     self.end
                 } * 1_000_000.0).round() as i64,
             input: self.media.input.clone(),
-            prev_hash: self.last_end_preview_hash,
+            prev_hash: self.previews.last_end_hash,
         };
 
         Task::batch([
-            if start_preview == self.last_start_preview {
+            if start == self.previews.last_start {
                 // No need to reload the same image
                 Task::none()
             } else {
-                self.last_start_preview = start_preview.clone();
-                let (task, handle) = Task::perform(
-                    start_preview.decode_preview_image(),
-                    Message::LoadedStartPreview,
-                )
-                .abortable();
+                self.previews.last_start = start.clone();
+                let (task, handle) =
+                    Task::perform(start.decode_preview_image(), Message::LoadedStartPreview)
+                        .abortable();
 
-                if let Some(handle) = &self.start_preview_task_handle {
+                if let Some(handle) = &self.previews.start_task_handle {
                     handle.abort();
                 }
 
-                self.start_preview_task_handle = Some(handle);
+                self.previews.start_task_handle = Some(handle);
 
                 task
             },
-            if end_preview == self.last_end_preview {
+            if end == self.previews.last_end {
                 // No need to reload the same image
                 Task::none()
             } else {
-                self.last_end_preview = end_preview.clone();
-                let (task, handle) = Task::perform(
-                    end_preview.decode_preview_image(),
-                    Message::LoadedEndPreview,
-                )
-                .abortable();
+                self.previews.last_end = end.clone();
+                let (task, handle) =
+                    Task::perform(end.decode_preview_image(), Message::LoadedEndPreview)
+                        .abortable();
 
-                if let Some(handle) = &self.end_preview_task_handle {
+                if let Some(handle) = &self.previews.end_task_handle {
                     handle.abort();
                 }
 
-                self.end_preview_task_handle = Some(handle);
+                self.previews.end_task_handle = Some(handle);
 
                 task
             },
