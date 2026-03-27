@@ -235,75 +235,76 @@ impl State {
                 eprintln!("failed to allocate preview: {e}")
             }
 
-            Message::Event(event) => {
-                if let Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) = event {
-                    match key.as_ref() {
-                        // input field cycling
-                        Key::Named(key::Named::Tab) => {
-                            if modifiers.shift() {
-                                return widget::operation::focus_previous();
-                            } else {
-                                return widget::operation::focus_next();
-                            }
-                        }
-
-                        Key::Named(key::Named::ArrowRight) | Key::Character("l") => {
-                            return if modifiers.shift() {
-                                Task::done(Message::EagerEndChange(self.end + 5.0))
-                            } else {
-                                Task::done(Message::EagerStartChange(self.media.start + 5.0))
-                            };
-                        }
-                        Key::Named(key::Named::ArrowLeft) | Key::Character("h") => {
-                            return if modifiers.shift() {
-                                Task::done(Message::EagerEndChange(self.end - 5.0))
-                            } else {
-                                Task::done(Message::EagerStartChange(self.media.start - 5.0))
-                            };
-                        }
-
-                        Key::Named(key::Named::ArrowUp) | Key::Character("k") => {
-                            return if modifiers.shift() {
-                                Task::done(Message::EagerEndChange(self.end + 10.0))
-                            } else {
-                                Task::done(Message::EagerStartChange(self.media.start + 10.0))
-                            };
-                        }
-                        Key::Named(key::Named::ArrowDown) | Key::Character("j") => {
-                            return if modifiers.shift() {
-                                Task::done(Message::EagerEndChange(self.end - 10.0))
-                            } else {
-                                Task::done(Message::EagerStartChange(self.media.start - 10.0))
-                            };
-                        }
-
-                        Key::Character("v") => return Task::done(Message::ToggleVideo),
-                        Key::Character("a") => return Task::done(Message::ToggleAudio),
-                        Key::Character("s") => return Task::done(Message::ToggleSubs),
-                        Key::Character("e") => return Task::done(Message::ToggleExtraStreams),
-
-                        Key::Character("i") | Key::Character("f") => {
-                            return Task::done(Message::PickInput);
-                        }
-                        Key::Character("o") | Key::Character("d") => {
-                            return Task::done(Message::PickOutput);
-                        }
-
-                        // early-exit hotkeys
-                        Key::Character("q") => {
-                            return window::latest().and_then(window::close);
-                        }
-
-                        Key::Named(key::Named::Enter) => {
-                            if modifiers.shift() {
-                                return Task::done(Message::Instantiate);
-                            }
-                        }
-
-                        _ => {}
+            Message::Event(Event::Keyboard(keyboard::Event::KeyPressed {
+                key, modifiers, ..
+            })) => match key.as_ref() {
+                // input field cycling
+                Key::Named(key::Named::Tab) => {
+                    if modifiers.shift() {
+                        return widget::operation::focus_previous();
+                    } else {
+                        return widget::operation::focus_next();
                     }
                 }
-            }
+
+                Key::Named(key::Named::ArrowRight) | Key::Character("l") => {
+                    return if modifiers.shift() {
+                        Task::done(Message::EagerEndChange(self.end + 5.0))
+                    } else {
+                        Task::done(Message::EagerStartChange(self.media.start + 5.0))
+                    };
+                }
+                Key::Named(key::Named::ArrowLeft) | Key::Character("h") => {
+                    return if modifiers.shift() {
+                        Task::done(Message::EagerEndChange(self.end - 5.0))
+                    } else {
+                        Task::done(Message::EagerStartChange(self.media.start - 5.0))
+                    };
+                }
+
+                Key::Named(key::Named::ArrowUp) | Key::Character("k") => {
+                    return if modifiers.shift() {
+                        Task::done(Message::EagerEndChange(self.end + 10.0))
+                    } else {
+                        Task::done(Message::EagerStartChange(self.media.start + 10.0))
+                    };
+                }
+                Key::Named(key::Named::ArrowDown) | Key::Character("j") => {
+                    return if modifiers.shift() {
+                        Task::done(Message::EagerEndChange(self.end - 10.0))
+                    } else {
+                        Task::done(Message::EagerStartChange(self.media.start - 10.0))
+                    };
+                }
+
+                Key::Character("v") => return Task::done(Message::ToggleVideo),
+                Key::Character("a") => return Task::done(Message::ToggleAudio),
+                Key::Character("s") => return Task::done(Message::ToggleSubs),
+                Key::Character("e") => return Task::done(Message::ToggleExtraStreams),
+
+                Key::Character("i") | Key::Character("f") => {
+                    return Task::done(Message::PickInput);
+                }
+                Key::Character("o") | Key::Character("d") => {
+                    return Task::done(Message::PickOutput);
+                }
+
+                // early-exit hotkeys
+                Key::Character("q") => {
+                    return window::latest().and_then(window::close);
+                }
+
+                Key::Named(key::Named::Enter) => {
+                    if modifiers.shift() {
+                        return Task::done(Message::Instantiate);
+                    }
+                }
+
+                // ignore unbound keys
+                _ => {}
+            },
+            // ignore all non-keyboard events
+            Message::Event(_) => {}
 
             Message::Instantiate => {
                 self.error.clear();
