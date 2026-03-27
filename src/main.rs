@@ -468,6 +468,9 @@ impl State {
         if self.media.start < 0.0 {
             self.media.start = 0.0;
         }
+        if self.end < 0.0 {
+            self.end = 0.0;
+        }
 
         if self.end > self.input_length {
             self.end = self.input_length;
