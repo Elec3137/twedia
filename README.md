@@ -2,10 +2,12 @@
 
 GUI to losslessly mess with media files
 
-Currently only packaged with `nix`
-
+Useful for clipping or removing audio/video, instantly and without any loss in quality;
+[demo!](https://www.youtube.com/watch?v=Embpni9rP1s)
 
 # Install
+
+## Using Nix
 
 This will compile the program if
 it cannot find it in your configured binary caches
@@ -13,11 +15,14 @@ it cannot find it in your configured binary caches
 nix profile install github:Elec3137/twedia
 ```
 
-If you have a local copy of the repo you want to use,
-you can `cd` into it and do:
-```sh
-nix profile install .
-```
+## Using flatpak
+
+Download the `.flatpak` file from [releases](https://github.com/Elec3137/twedia/releases),
+and install it with your app store of choice. (often just right click -> install)
+
+Alternatively, here's a oneliner to fetch and install the latest release: `curl -L $(curl -s https://api.github.com/repos/Elec3137/twedia/releases/latest | grep '"browser_download_url":' | grep 'moe.pancake.twedia.flatpak' |  grep -o 'https://[^"]*') -o /tmp/moe.pancake.twedia.flatpak && flatpak install --user /tmp/moe.pancake.twedia.flatpak`
+[source](https://gist.github.com/steinwaywhw/a4cd19cda655b8249d908261a62687f8?permalink_comment_id=5124113#gistcomment-5124113)
+
 
 # Develop
 
@@ -26,7 +31,8 @@ The prefered way to develop is with `direnv` (`nix`) and `cargo`;
 git clone https://github.com/Elec3137/twedia
 cd twedia
 direnv allow
-cargo build # do your thing
+cargo build # or `nix build`
+cargo run # or `nix run`
 ```
 
 
