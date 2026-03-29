@@ -53,6 +53,9 @@ enum Message {
     AllocatedStartPreview(Result<widget::image::Allocation, widget::image::Error>),
     AllocatedEndPreview(Result<widget::image::Allocation, widget::image::Error>),
 
+    PlayStartPreview,
+    PlayEndPreview,
+
     Event(Event),
 
     Instantiate,
@@ -220,6 +223,29 @@ impl State {
                 eprintln!("failed to allocate preview: {e}")
             }
 
+            Message::PlayStartPreview => {
+                return Task::perform(
+                    Preview {
+                        seek: self.media.start,
+                        input: self.media.input.clone(),
+                    }
+                    .play(5),
+                    |()| {},
+                )
+                .discard();
+            }
+            Message::PlayEndPreview => {
+                return Task::perform(
+                    Preview {
+                        seek: self.end - 5.0,
+                        input: self.media.input.clone(),
+                    }
+                    .play(5),
+                    |()| {},
+                )
+                .discard();
+            }
+
             Message::Event(Event::Keyboard(keyboard::Event::KeyPressed {
                 key, modifiers, ..
             })) => match key.as_ref() {
@@ -272,6 +298,14 @@ impl State {
                 }
                 Key::Character("o") | Key::Character("d") => {
                     return Task::done(Message::PickOutput);
+                }
+
+                Key::Character("p") => {
+                    return Task::done(if modifiers.shift() {
+                        Message::PlayEndPreview
+                    } else {
+                        Message::PlayStartPreview
+                    });
                 }
 
                 // early-exit hotkeys
@@ -393,6 +427,10 @@ impl State {
         let instantiate_button = widget::button("Instantiate!").on_press(Message::Instantiate);
         let duration_string = format!("Duration: {} seconds", self.media.dur);
 
+        let start_play_button =
+            widget::button("play start preview").on_press(Message::PlayStartPreview);
+        let end_play_button = widget::button("play end preview").on_press(Message::PlayEndPreview);
+
         #[rustfmt::skip]
         return widget::column![
             widget::row![input_field, input_picker],
@@ -413,7 +451,11 @@ impl State {
 
             status_display,
 
-            widget::row![widget::text("Press Shift-Enter, or:"), instantiate_button, widget::text(duration_string)]
+            widget::row![
+                start_play_button,
+                widget::text("Press Shift-Enter, or:"), instantiate_button, widget::text(duration_string),
+                end_play_button,
+                ]
                 .spacing(10)
                 .align_y(Vertical::Center)
         ]
@@ -521,16 +563,16 @@ impl State {
         }
 
         let start = Preview {
-            seek: (self.media.start * 1_000_000.0).round() as i64,
+            seek: self.media.start,
             input: self.media.input.clone(),
         };
         let end = Preview {
             seek: // seek slightly before the end of the video to get a frame
-                (if self.end > self.input_length - 0.1 {
+                if self.end > self.input_length - 0.1 {
                     self.end - 0.5
                 } else {
                     self.end
-                } * 1_000_000.0).round() as i64,
+                },
             input: self.media.input.clone(),
         };
 

@@ -10,7 +10,7 @@ use ffmpeg_next as ffmpeg;
 
 #[derive(Debug, Default, PartialEq, Clone)]
 pub struct Preview {
-    pub seek: i64,
+    pub seek: f64,
     pub input: String,
 }
 
@@ -69,7 +69,7 @@ impl Preview {
         let mut decoded = ffmpeg::util::frame::video::Video::empty();
         let mut rgb_frame = ffmpeg::util::frame::video::Video::empty();
 
-        ictx.seek(self.seek, i64::MIN..i64::MAX)
+        ictx.seek((self.seek * 1_000_000.0).round() as i64, i64::MIN..i64::MAX)
             .map_err(PreviewError::Raw)?;
 
         for packet in ictx.packets().filter_map(|(stream, packet)| {
@@ -121,6 +121,19 @@ impl Preview {
         }
 
         Err(PreviewError::NoPackets)
+    }
+
+    pub async fn play(self, secs: isize) {
+        #![allow(unused_must_use)]
+        Command::new("mpv")
+            .args([
+                format!("--start={}", self.seek),
+                format!("--length={}", secs),
+                "--player-operation-mode=pseudo-gui".to_string(),
+                "--no-config".to_string(),
+                self.input,
+            ])
+            .spawn();
     }
 }
 
