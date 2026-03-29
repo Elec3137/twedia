@@ -12,7 +12,6 @@ use ffmpeg_next as ffmpeg;
 pub struct Preview {
     pub seek: i64,
     pub input: String,
-    pub prev_hash: u64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -35,7 +34,10 @@ impl Display for PreviewError {
 impl std::error::Error for PreviewError {}
 
 impl Preview {
-    pub async fn decode_image(self) -> Result<(widget::image::Handle, u64), PreviewError> {
+    pub async fn decode_image(
+        self,
+        prev_hash: u64,
+    ) -> Result<(widget::image::Handle, u64), PreviewError> {
         let mut ictx = ffmpeg::format::input(&self.input).map_err(PreviewError::Raw)?;
 
         let input = ictx
@@ -87,7 +89,7 @@ impl Preview {
             let new_hash = hasher.finish();
 
             // make sure that the hash is different before decoding
-            if new_hash == self.prev_hash {
+            if new_hash == prev_hash {
                 return Err(PreviewError::SameHash);
             }
 

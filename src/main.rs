@@ -523,7 +523,6 @@ impl State {
         let start = Preview {
             seek: (self.media.start * 1_000_000.0).round() as i64,
             input: self.media.input.clone(),
-            prev_hash: self.previews.last_start_hash,
         };
         let end = Preview {
             seek: // seek slightly before the end of the video to get a frame
@@ -533,7 +532,6 @@ impl State {
                     self.end
                 } * 1_000_000.0).round() as i64,
             input: self.media.input.clone(),
-            prev_hash: self.previews.last_end_hash,
         };
 
         Task::batch([
@@ -542,8 +540,11 @@ impl State {
                 Task::none()
             } else {
                 self.previews.last_start = start.clone();
-                let (task, handle) =
-                    Task::perform(start.decode_image(), Message::LoadedStartPreview).abortable();
+                let (task, handle) = Task::perform(
+                    start.decode_image(self.previews.last_start_hash),
+                    Message::LoadedStartPreview,
+                )
+                .abortable();
 
                 if let Some(handle) = &self.previews.start_task_handle {
                     handle.abort();
@@ -558,8 +559,11 @@ impl State {
                 Task::none()
             } else {
                 self.previews.last_end = end.clone();
-                let (task, handle) =
-                    Task::perform(end.decode_image(), Message::LoadedEndPreview).abortable();
+                let (task, handle) = Task::perform(
+                    end.decode_image(self.previews.last_end_hash),
+                    Message::LoadedEndPreview,
+                )
+                .abortable();
 
                 if let Some(handle) = &self.previews.end_task_handle {
                     handle.abort();
