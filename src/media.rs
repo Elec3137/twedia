@@ -124,14 +124,17 @@ impl Preview {
     }
 
     pub async fn play(self, secs: isize) {
-        #![allow(unused_must_use)]
+        let start_arg = format!("--start={}", self.seek);
+        let length_arg = format!("--length={}", secs);
+
+        #[allow(unused_must_use)]
         Command::new("mpv")
             .args([
-                format!("--start={}", self.seek),
-                format!("--length={}", secs),
-                "--player-operation-mode=pseudo-gui".to_string(),
-                "--no-config".to_string(),
-                self.input,
+                &start_arg,
+                &length_arg,
+                "--player-operation-mode=pseudo-gui",
+                "--no-config",
+                &self.input,
             ])
             .spawn()
             .inspect_err(|e| eprintln!("failed to spawn mpv: {e}"));
