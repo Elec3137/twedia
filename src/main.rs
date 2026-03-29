@@ -14,6 +14,9 @@ use iced::{
     widget, window,
 };
 
+mod utils;
+use crate::utils::*;
+
 mod paths;
 use paths::*;
 
@@ -191,12 +194,10 @@ impl State {
             Message::Submitted => return self.check_inputs(),
             Message::Update => return self.check_inputs(),
 
-            Message::ToggleVideo => self.media.use_video = !self.media.use_video,
-            Message::ToggleAudio => self.media.use_audio = !self.media.use_audio,
-            Message::ToggleSubs => self.media.use_subs = !self.media.use_subs,
-            Message::ToggleExtraStreams => {
-                self.media.use_extra_streams = !self.media.use_extra_streams
-            }
+            Message::ToggleVideo => self.media.use_video.toggle(),
+            Message::ToggleAudio => self.media.use_audio.toggle(),
+            Message::ToggleSubs => self.media.use_subs.toggle(),
+            Message::ToggleExtraStreams => self.media.use_extra_streams.toggle(),
 
             Message::LoadedStartPreview(Ok((handle, hash))) => {
                 self.previews.last_start_hash = hash;
