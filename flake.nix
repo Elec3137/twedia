@@ -25,32 +25,44 @@
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
         name = cargoToml.package.name;
 
+        compiletimeTools = with pkgs; [
+          # for ffmpeg-sys-next
+          rustPlatform.bindgenHook
+          pkg-config
+        ];
+        compiletimeLibs = with pkgs; [
+          ffmpeg
+        ];
+
+        runtimeExes = with pkgs; [
+          ffmpeg
+        ];
+        runtimeLibs = with pkgs; [
+          # doesn't look like it's needed for some reason
+          ffmpeg
+
+          # needed for both x11 and wayland
+          libxkbcommon
+
+          wayland
+
+          libx11
+          libxcursor
+          libxi
+        ];
+
         commonArgs = {
+          # all that's needed for artifacts and checks
+          nativeBuildInputs = compiletimeTools;
+          buildInputs = compiletimeLibs;
+
           src = craneLib.cleanCargoSource ./.;
 
           # workaround from https://crane.dev/faq/rebuilds-bindgen.html
           NIX_OUTPATH_USED_AS_RANDOM_SEED = "aaaaaaaaaa";
-
-          nativeBuildInputs = with pkgs; [
-            rustPlatform.bindgenHook
-            makeBinaryWrapper
-            pkg-config
-          ];
-
-          buildInputs = with pkgs; [
-            ffmpeg
-
-            libxkbcommon
-
-            wayland
-
-            libx11
-            libxcursor
-            libxi
-          ];
         };
 
-        LD_LIBRARY_PATH = lib.makeLibraryPath commonArgs.buildInputs;
+        LD_LIBRARY_PATH = lib.makeLibraryPath runtimeLibs;
 
         # Build *just* the cargo dependencies, so we can reuse
         # all of that work (e.g. via cachix) when running in CI
@@ -85,13 +97,21 @@
             // {
               inherit cargoArtifacts;
 
+              nativeBuildInputs =
+                with pkgs;
+                commonArgs.nativeBuildInputs
+                ++ [
+                  makeBinaryWrapper
+                ];
+              buildInputs = commonArgs.buildInputs;
+
               postFixup = ''
                 mkdir -p "$out/share/applications"
                 ln -s "${desktopItem}"/share/applications/* "$out/share/applications/"
 
                 wrapProgram $out/bin/${name} \
-                  --prefix PATH : ${lib.makeBinPath [ pkgs.ffmpeg ]} \
-                  --prefix LD_LIBRARY_PATH : ${LD_LIBRARY_PATH}
+                  --prefix PATH : "${lib.makeBinPath runtimeExes}" \
+                  --prefix LD_LIBRARY_PATH : "${LD_LIBRARY_PATH}"
               '';
             }
           );
