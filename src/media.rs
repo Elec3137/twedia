@@ -35,7 +35,7 @@ impl Display for PreviewError {
 impl std::error::Error for PreviewError {}
 
 impl Preview {
-    pub async fn decode_preview_image(self) -> Result<(widget::image::Handle, u64), PreviewError> {
+    pub async fn decode_image(self) -> Result<(widget::image::Handle, u64), PreviewError> {
         let mut ictx = ffmpeg::format::input(&self.input).map_err(PreviewError::Raw)?;
 
         let input = ictx

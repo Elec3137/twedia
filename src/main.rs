@@ -543,8 +543,7 @@ impl State {
             } else {
                 self.previews.last_start = start.clone();
                 let (task, handle) =
-                    Task::perform(start.decode_preview_image(), Message::LoadedStartPreview)
-                        .abortable();
+                    Task::perform(start.decode_image(), Message::LoadedStartPreview).abortable();
 
                 if let Some(handle) = &self.previews.start_task_handle {
                     handle.abort();
@@ -560,8 +559,7 @@ impl State {
             } else {
                 self.previews.last_end = end.clone();
                 let (task, handle) =
-                    Task::perform(end.decode_preview_image(), Message::LoadedEndPreview)
-                        .abortable();
+                    Task::perform(end.decode_image(), Message::LoadedEndPreview).abortable();
 
                 if let Some(handle) = &self.previews.end_task_handle {
                     handle.abort();
