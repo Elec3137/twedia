@@ -72,9 +72,6 @@ struct PreviewState {
 
     start_task_handle: Option<task::Handle>,
     end_task_handle: Option<task::Handle>,
-
-    start_allocation_task_handle: Option<task::Handle>,
-    end_allocation_task_handle: Option<task::Handle>,
 }
 
 #[derive(Debug, Default)]
@@ -202,32 +199,12 @@ impl State {
             Message::LoadedStartPreview(Ok((handle, hash))) => {
                 self.previews.last_start_hash = hash;
 
-                let (task, handle) = widget::image::allocate(handle)
-                    .map(Message::AllocatedStartPreview)
-                    .abortable();
-
-                if let Some(handle) = &self.previews.start_allocation_task_handle {
-                    handle.abort();
-                }
-
-                self.previews.start_allocation_task_handle = Some(handle);
-
-                return task;
+                return widget::image::allocate(handle).map(Message::AllocatedStartPreview);
             }
             Message::LoadedEndPreview(Ok((handle, hash))) => {
                 self.previews.last_end_hash = hash;
 
-                let (task, handle) = widget::image::allocate(handle)
-                    .map(Message::AllocatedEndPreview)
-                    .abortable();
-
-                if let Some(handle) = &self.previews.end_allocation_task_handle {
-                    handle.abort();
-                }
-
-                self.previews.end_allocation_task_handle = Some(handle);
-
-                return task;
+                return widget::image::allocate(handle).map(Message::AllocatedEndPreview);
             }
             Message::LoadedStartPreview(Err(e)) | Message::LoadedEndPreview(Err(e)) => {
                 if e != PreviewError::SameHash {
