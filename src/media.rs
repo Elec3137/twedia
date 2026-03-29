@@ -133,7 +133,8 @@ impl Preview {
                 "--no-config".to_string(),
                 self.input,
             ])
-            .spawn();
+            .spawn()
+            .inspect_err(|e| eprintln!("failed to spawn mpv: {e}"));
     }
 }
 
