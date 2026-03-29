@@ -100,6 +100,7 @@
         packages.default = crate;
 
         packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
+          developer = "electria";
           appId = "moe.pancake.${name}";
           package = crate;
           runtime = "org.gnome.Platform/49";
