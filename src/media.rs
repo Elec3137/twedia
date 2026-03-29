@@ -134,6 +134,7 @@ impl Preview {
                 &length_arg,
                 "--player-operation-mode=pseudo-gui",
                 "--no-config",
+                "--volume=70",
                 &self.input,
             ])
             .spawn()
