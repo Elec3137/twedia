@@ -483,8 +483,7 @@ impl State {
             match self.update_from_input() {
                 Err(e) => eprintln!("failed to inspect input media '{}': {e}", self.media.input),
                 Ok(task) => {
-                    tasks.push(task);
-                    tasks.push(self.create_preview_images());
+                    tasks.push(task.chain(self.create_preview_images()));
                 }
             }
 
