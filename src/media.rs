@@ -123,20 +123,30 @@ impl Preview {
         Err(PreviewError::NoPackets)
     }
 
-    pub async fn play(self, secs: isize) {
+    pub async fn play(self, secs: isize, video: bool, audio: bool) {
         let start_arg = format!("--start={}", self.seek);
         let length_arg = format!("--length={}", secs);
 
+        let mut args = vec![
+            &start_arg,
+            &length_arg,
+            "--no-config",
+            "--volume=70",
+            &self.input,
+        ];
+
+        if !video {
+            args.push("--video=no")
+        } else {
+            args.push("--player-operation-mode=pseudo-gui")
+        }
+        if !audio {
+            args.push("--audio=no");
+        }
+
         #[allow(unused_must_use)]
         Command::new("mpv")
-            .args([
-                &start_arg,
-                &length_arg,
-                "--player-operation-mode=pseudo-gui",
-                "--no-config",
-                "--volume=70",
-                &self.input,
-            ])
+            .args(args)
             .spawn()
             .inspect_err(|e| eprintln!("failed to spawn mpv: {e}"));
     }

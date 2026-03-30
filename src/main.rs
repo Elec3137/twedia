@@ -229,7 +229,7 @@ impl State {
                         seek: self.media.start,
                         input: self.media.input.clone(),
                     }
-                    .play(5),
+                    .play(5, self.media.use_video, self.media.use_audio),
                     |()| {},
                 )
                 .discard();
@@ -240,7 +240,7 @@ impl State {
                         seek: self.end - 5.0,
                         input: self.media.input.clone(),
                     }
-                    .play(5),
+                    .play(5, self.media.use_video, self.media.use_audio),
                     |()| {},
                 )
                 .discard();
