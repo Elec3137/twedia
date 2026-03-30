@@ -43,11 +43,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1773751765,
-        "narHash": "sha256-ksSfcMZOYdkHKiOxhYosgl7fqNOb9a6qp5szCPJK2Jo=",
+        "lastModified": 1774860670,
+        "narHash": "sha256-YjJkQrvxrErXtfDi3obUn6rNmkA+CIAZ3f5NgL5xuYE=",
         "owner": "neobrain",
         "repo": "nix2flatpak",
-        "rev": "8e4029b7f1fd085c84258a81d7ab0c0cdc0cbeb5",
+        "rev": "61d68e21e3fbc2d57590051f48736bea271f4aba",
         "type": "github"
       },
       "original": {

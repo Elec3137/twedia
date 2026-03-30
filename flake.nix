@@ -125,10 +125,15 @@
           appId = "moe.pancake.${name}";
           package = crate;
           runtime = "org.gnome.Platform/49";
-          permissions.sockets = [
-            "fallback-x11"
-            "wayland"
-          ];
+          permissions = {
+            devices = [
+              "dri"
+            ];
+            sockets = [
+              "fallback-x11"
+              "wayland"
+            ];
+          };
         };
 
         checks = {
