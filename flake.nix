@@ -130,6 +130,7 @@
               "dri"
             ];
             sockets = [
+              "pulseaudio"
               "fallback-x11"
               "wayland"
             ];
