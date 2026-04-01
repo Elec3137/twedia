@@ -298,7 +298,6 @@ impl State {
                     });
                 }
 
-                // early-exit hotkeys
                 Key::Character("q") => {
                     return window::latest().and_then(window::close);
                 }

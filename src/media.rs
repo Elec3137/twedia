@@ -124,7 +124,7 @@ impl Preview {
     }
 }
 
-/// A handle, returned by Preview::play
+/// A handle over mpv
 #[derive(Debug, Default)]
 pub struct Player(Option<process::Child>);
 impl Player {
