@@ -40,6 +40,8 @@ cargo run # or `nix run`
 
 ## main goals
 
+0. add feedback for when a preview is playing (eg red buttons)
+
 1. obsolete the CLI for creating and writing the final output
 
 2. test nix builds with other linux distributions
