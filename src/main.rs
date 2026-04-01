@@ -75,6 +75,8 @@ struct PreviewState {
 
     start_task_handle: Option<task::Handle>,
     end_task_handle: Option<task::Handle>,
+
+    player: media::Player,
 }
 
 #[derive(Debug, Default)]
@@ -224,26 +226,14 @@ impl State {
             }
 
             Message::PlayStartPreview => {
-                return Task::perform(
-                    Preview {
-                        seek: self.media.start,
-                        input: self.media.input.clone(),
-                    }
-                    .play(5, self.media.use_video, self.media.use_audio),
-                    |()| {},
-                )
-                .discard();
+                self.previews
+                    .player
+                    .toggle_preview(&self.media, self.media.start);
             }
             Message::PlayEndPreview => {
-                return Task::perform(
-                    Preview {
-                        seek: self.end - 5.0,
-                        input: self.media.input.clone(),
-                    }
-                    .play(5, self.media.use_video, self.media.use_audio),
-                    |()| {},
-                )
-                .discard();
+                self.previews
+                    .player
+                    .toggle_preview(&self.media, self.end - 5.0);
             }
 
             Message::Event(Event::Keyboard(keyboard::Event::KeyPressed {

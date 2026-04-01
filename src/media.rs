@@ -4,7 +4,7 @@ use std::{
 };
 
 use iced::widget;
-use smol::process::Command;
+use smol::{io, process};
 
 use ffmpeg_next as ffmpeg;
 
@@ -122,9 +122,22 @@ impl Preview {
 
         Err(PreviewError::NoPackets)
     }
+}
 
-    pub async fn play(self, secs: isize, video: bool, audio: bool) {
-        let start_arg = format!("--start={}", self.seek);
+/// A handle, returned by Preview::play
+#[derive(Debug, Default)]
+pub struct Player(Option<process::Child>);
+impl Player {
+    /// Spawns a new player,
+    /// discarding the handle to the previous one
+    pub fn play(
+        &mut self,
+        preview: Preview,
+        secs: isize,
+        video: bool,
+        audio: bool,
+    ) -> io::Result<()> {
+        let start_arg = format!("--start={}", preview.seek);
         let length_arg = format!("--length={}", secs);
 
         let mut args = vec![
@@ -132,7 +145,7 @@ impl Preview {
             &length_arg,
             "--no-config",
             "--volume=70",
-            &self.input,
+            &preview.input,
         ];
 
         if !video {
@@ -144,11 +157,71 @@ impl Preview {
             args.push("--audio=no");
         }
 
-        #[allow(unused_must_use)]
-        Command::new("mpv")
-            .args(args)
-            .spawn()
-            .inspect_err(|e| eprintln!("failed to spawn mpv: {e}"));
+        self.0 = Some(process::Command::new("mpv").args(args).spawn()?);
+
+        Ok(())
+    }
+
+    fn child_is_active(&mut self) -> bool {
+        match self.0 {
+            Some(ref mut child) => match &child.try_status() {
+                Ok(opt) => match opt {
+                    Some(status) => {
+                        if !status.success() {
+                            eprintln!("player failed with status: {status}");
+                        }
+                        false
+                    }
+                    None => true,
+                },
+                Err(e) => {
+                    eprintln!("failed to check status of player: {e}");
+                    false
+                }
+            },
+            None => false,
+        }
+    }
+
+    fn is_active(&mut self) -> bool {
+        let is_active = self.child_is_active();
+        if !is_active {
+            self.0 = None;
+        }
+
+        is_active
+    }
+
+    fn kill(&mut self) -> io::Result<()> {
+        if let Some(ref mut child) = self.0 {
+            child.kill()
+        } else {
+            Ok(())
+        }
+    }
+
+    fn toggle(&mut self, preview: Preview, secs: isize, video: bool, audio: bool) {
+        if self.is_active() {
+            #[allow(unused_must_use)]
+            self.kill()
+                .inspect_err(|e| eprintln!("failed to kill player: {e}"));
+        } else {
+            #[allow(unused_must_use)]
+            self.play(preview, secs, video, audio)
+                .inspect_err(|e| eprintln!("failed to play preview: {e}"));
+        }
+    }
+
+    pub fn toggle_preview(&mut self, media: &Media, seek: f64) {
+        self.toggle(
+            Preview {
+                seek,
+                input: media.input.clone(),
+            },
+            5,
+            media.use_video,
+            media.use_audio,
+        );
     }
 }
 
@@ -207,7 +280,7 @@ impl Media {
 
         args.push(&self.output);
 
-        match Command::new("ffmpeg").args(&args).spawn() {
+        match process::Command::new("ffmpeg").args(&args).spawn() {
             Err(e) => Err(e.to_string()),
             Ok(mut child) => match child.status().await {
                 Err(e) => Err(e.to_string()),
