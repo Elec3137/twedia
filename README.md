@@ -48,6 +48,14 @@ cargo run # or `nix run`
 
 4. consider looking into windows support
 
+## style
+
+1. de-monolithize `State::check_inputs`
+
+2. use pipewire in flatpak [issue](https://github.com/flatpak/flatpak/issues/5130)
+
+3. use enum `Extreme` for differentiating `End` and `Start` for previews, to reducing code repetition
+
 ## cosmic
 
 1. fix window decorations (should be able to drag it, close by clicking on the X)
