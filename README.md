@@ -1,6 +1,6 @@
 # twedia
 
-GUI to losslessly mess with media files
+the video editor for your pocket!
 
 Useful for clipping or removing audio/video, instantly and without any loss in quality;
 [demo!](https://www.youtube.com/watch?v=Embpni9rP1s)
