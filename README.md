@@ -56,7 +56,7 @@ cargo run # or `nix run`
 
 2. use pipewire in flatpak [issue](https://github.com/flatpak/flatpak/issues/5130)
 
-3. use enum `Extreme` for differentiating `End` and `Start` for previews, to reducing code repetition
+3. use enum `Extreme` for differentiating `End` and `Start` for previews, to reduce code repetition
 
 ## cosmic
 
