@@ -225,6 +225,12 @@ impl Player {
         );
     }
 }
+impl Drop for Player {
+    fn drop(&mut self) {
+        #[allow(unused_must_use)]
+        self.kill();
+    }
+}
 
 #[derive(Debug, Default, PartialEq, Clone)]
 pub struct Media {
