@@ -33,8 +33,8 @@ enum Message {
     InputPicked(Option<PathBuf>),
     OutputPicked(Option<PathBuf>),
 
-    StartChange(f64),
-    EndChange(f64),
+    StartChange(String),
+    EndChange(String),
     EagerStartChange(f64),
     EagerEndChange(f64),
 
@@ -82,6 +82,9 @@ struct PreviewState {
 #[derive(Debug, Default)]
 struct State {
     media: Media,
+
+    start: String,
+    end: String,
 
     input_changed: bool,
     input_exists: bool,
@@ -144,12 +147,20 @@ impl State {
                 }
             }
             Message::StartChange(val) => {
-                self.media.start = val;
-                self.number_changed = true;
+                self.start = val;
+                if let Ok(float) = self.start.parse() {
+                    self.media.start = float;
+                    self.number_changed = true;
+                    return self.check_inputs();
+                }
             }
             Message::EndChange(val) => {
-                self.media.end = val;
-                self.number_changed = true;
+                self.end = val;
+                if let Ok(float) = self.end.parse() {
+                    self.media.end = float;
+                    self.number_changed = true;
+                    return self.check_inputs();
+                }
             }
 
             Message::EagerStartChange(val) => {
@@ -344,8 +355,8 @@ impl State {
             Message::EagerStartChange,
         )
         .default(0);
-        let start_field = widget::text_input("start", &self.media.start.to_string())
-            .on_input(|str| Message::StartChange(str.parse().unwrap_or_default()))
+        let start_field = widget::text_input("start", &self.start)
+            .on_input(Message::StartChange)
             .width(200)
             .on_submit(Message::Submitted);
 
@@ -355,8 +366,8 @@ impl State {
             Message::EagerEndChange,
         )
         .default(self.input_length);
-        let end_field = widget::text_input("end", &self.media.end.to_string())
-            .on_input(|str| Message::EndChange(str.parse().unwrap_or_default()))
+        let end_field = widget::text_input("end", &self.end)
+            .on_input(Message::EndChange)
             .width(200)
             .on_submit(Message::Submitted);
 
@@ -479,6 +490,9 @@ impl State {
             tasks.push(self.generate_output_path());
         }
 
+        self.end = self.media.end.to_string();
+        self.start = self.media.start.to_string();
+
         Task::batch(tasks)
     }
 
@@ -513,7 +527,7 @@ impl State {
 
         Ok(Task::batch([
             // Set the end to the duration of the video
-            Task::done(Message::EndChange(self.input_length)),
+            Task::done(Message::EagerEndChange(self.input_length)),
             if self.media.output.is_empty() || self.output_is_generated {
                 // Generate a output path if there is none from user input
                 self.generate_output_path()
