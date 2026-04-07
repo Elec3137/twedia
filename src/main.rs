@@ -468,6 +468,8 @@ impl State {
 
         if self.number_changed {
             self.clamp_numbers();
+
+            // only create preview images if we weren't going to do that later anyway
             if !self.input_changed {
                 tasks.push(self.create_preview_images());
             }
@@ -483,6 +485,8 @@ impl State {
             }
 
             self.input_changed = false;
+        // this is "else" because Self::update_from_input
+        // already generates an output path
         } else if self.media.output.is_empty()
             && !self.output_is_generated
             && !self.media.input.is_empty()
