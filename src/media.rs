@@ -328,10 +328,10 @@ impl Media {
     /// call this function when user input has ceased.
     pub fn clamp_numbers(&mut self, input_length: f64) {
         if self.start < 0.0 {
-            self.start = -self.start;
+            self.start = 0.0;
         }
         if self.end < 0.0 {
-            self.end = -self.end;
+            self.end = 0.0;
         }
 
         if self.end > input_length {
