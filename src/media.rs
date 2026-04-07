@@ -320,4 +320,30 @@ impl Media {
 
         Ok(context.duration() as f64 / f64::from(ffmpeg::ffi::AV_TIME_BASE))
     }
+
+    /// this function should make sure that the start and end values are reasonable,
+    /// regardless of when it is called.
+    ///
+    /// It is however a little disruptive to user input;
+    /// call this function when user input has ceased.
+    pub fn clamp_numbers(&mut self, input_length: f64) {
+        if self.start < 0.0 {
+            self.start = -self.start;
+        }
+        if self.end < 0.0 {
+            self.end = -self.end;
+        }
+
+        if self.end > input_length {
+            self.end = input_length;
+        }
+
+        if self.start > self.end {
+            self.start = self.end;
+        }
+
+        if self.end < self.start {
+            self.end = self.start;
+        }
+    }
 }

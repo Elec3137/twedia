@@ -476,7 +476,7 @@ impl State {
         let mut tasks = Vec::new();
 
         if self.number_changed {
-            self.clamp_numbers();
+            self.media.clamp_numbers(self.input_length);
 
             tasks.push(self.create_preview_images());
 
@@ -492,32 +492,6 @@ impl State {
         self.start = self.media.start.to_string();
 
         Task::batch(tasks)
-    }
-
-    /// this function should make sure that the start and end values are reasonable,
-    /// regardless of when it is called.
-    ///
-    /// It is however a little disruptive to user input;
-    /// call this function when user input has ceased.
-    fn clamp_numbers(&mut self) {
-        if self.media.start < 0.0 {
-            self.media.start = -self.media.start;
-        }
-        if self.media.end < 0.0 {
-            self.media.end = -self.media.end;
-        }
-
-        if self.media.end > self.input_length {
-            self.media.end = self.input_length;
-        }
-
-        if self.media.start > self.media.end {
-            self.media.start = self.media.end;
-        }
-
-        if self.media.end < self.media.start {
-            self.media.end = self.media.start;
-        }
     }
 
     /// updates `self.media` by calling ffmpeg on `self.media.input`.
