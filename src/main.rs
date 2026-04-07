@@ -111,10 +111,7 @@ impl State {
         // and creates the output file path from it
         let mut args = env::args();
         if let Some(str) = args.nth(1) {
-            (
-                state,
-                Task::done(Message::InputChange(str)).chain(Task::done(Message::Update)),
-            )
+            (state, Task::done(Message::InputChange(str)))
         } else {
             (state, Task::none())
         }
