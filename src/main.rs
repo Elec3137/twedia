@@ -88,7 +88,6 @@ struct State {
 
     input_length: f64,
 
-    end: f64,
     number_changed: bool,
 
     previews: PreviewState,
@@ -147,24 +146,20 @@ impl State {
             Message::StartChange(val) => {
                 self.media.start = val;
                 self.number_changed = true;
-                self.media.dur = self.end - self.media.start;
             }
             Message::EndChange(val) => {
-                self.end = val;
+                self.media.end = val;
                 self.number_changed = true;
-                self.media.dur = self.end - self.media.start;
             }
 
             Message::EagerStartChange(val) => {
                 self.media.start = val;
                 self.number_changed = true;
-                self.media.dur = self.end - self.media.start;
                 return self.check_inputs();
             }
             Message::EagerEndChange(val) => {
-                self.end = val;
+                self.media.end = val;
                 self.number_changed = true;
-                self.media.dur = self.end - self.media.start;
                 return self.check_inputs();
             }
 
@@ -233,7 +228,7 @@ impl State {
             Message::PlayEndPreview => {
                 self.previews
                     .player
-                    .toggle_preview(&self.media, self.end - 5.0);
+                    .toggle_preview(&self.media, self.media.end - 5.0);
             }
 
             Message::Event(Event::Keyboard(keyboard::Event::KeyPressed {
@@ -250,14 +245,14 @@ impl State {
 
                 Key::Named(key::Named::ArrowRight) | Key::Character("l") => {
                     return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.end + 5.0))
+                        Task::done(Message::EagerEndChange(self.media.end + 5.0))
                     } else {
                         Task::done(Message::EagerStartChange(self.media.start + 5.0))
                     };
                 }
                 Key::Named(key::Named::ArrowLeft) | Key::Character("h") => {
                     return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.end - 5.0))
+                        Task::done(Message::EagerEndChange(self.media.end - 5.0))
                     } else {
                         Task::done(Message::EagerStartChange(self.media.start - 5.0))
                     };
@@ -265,14 +260,14 @@ impl State {
 
                 Key::Named(key::Named::ArrowUp) | Key::Character("k") => {
                     return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.end + 10.0))
+                        Task::done(Message::EagerEndChange(self.media.end + 10.0))
                     } else {
                         Task::done(Message::EagerStartChange(self.media.start + 10.0))
                     };
                 }
                 Key::Named(key::Named::ArrowDown) | Key::Character("j") => {
                     return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.end - 10.0))
+                        Task::done(Message::EagerEndChange(self.media.end - 10.0))
                     } else {
                         Task::done(Message::EagerStartChange(self.media.start - 10.0))
                     };
@@ -344,7 +339,7 @@ impl State {
             });
 
         let start_slider = widget::slider(
-            0_f64..=self.end - 1.0,
+            0_f64..=self.media.end - 1.0,
             self.media.start,
             Message::EagerStartChange,
         )
@@ -356,11 +351,11 @@ impl State {
 
         let end_slider = widget::slider(
             self.media.start + 1.0..=self.input_length,
-            self.end,
+            self.media.end,
             Message::EagerEndChange,
         )
         .default(self.input_length);
-        let end_field = widget::text_input("end", &self.end.to_string())
+        let end_field = widget::text_input("end", &self.media.end.to_string())
             .on_input(|str| Message::EndChange(str.parse().unwrap_or_default()))
             .width(200)
             .on_submit(Message::Submitted);
@@ -414,7 +409,7 @@ impl State {
         };
 
         let instantiate_button = widget::button("Instantiate!").on_press(Message::Instantiate);
-        let duration_string = format!("Duration: {} seconds", self.media.dur);
+        let duration_string = format!("Duration: {} seconds", self.media.end - self.media.start);
 
         let start_play_button =
             widget::button("play start preview").on_press(Message::PlayStartPreview);
@@ -491,20 +486,20 @@ impl State {
         if self.media.start < 0.0 {
             self.media.start = 0.0;
         }
-        if self.end < 0.0 {
-            self.end = 0.0;
+        if self.media.end < 0.0 {
+            self.media.end = 0.0;
         }
 
-        if self.end > self.input_length {
-            self.end = self.input_length;
+        if self.media.end > self.input_length {
+            self.media.end = self.input_length;
         }
 
-        if self.media.start > self.end {
-            self.media.start = self.end;
+        if self.media.start > self.media.end {
+            self.media.start = self.media.end;
         }
 
-        if self.end < self.media.start {
-            self.end = self.media.start;
+        if self.media.end < self.media.start {
+            self.media.end = self.media.start;
         }
     }
 
@@ -556,10 +551,10 @@ impl State {
         };
         let end = Preview {
             seek: // seek slightly before the end of the video to get a frame
-                if self.end > self.input_length - 0.1 {
-                    self.end - 0.5
+                if self.media.end > self.input_length - 0.1 {
+                    self.media.end - 0.5
                 } else {
-                    self.end
+                    self.media.end
                 },
             input: self.media.input.clone(),
         };

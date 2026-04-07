@@ -229,7 +229,7 @@ impl Player {
 #[derive(Debug, Default, PartialEq, Clone)]
 pub struct Media {
     pub start: f64,
-    pub dur: f64,
+    pub end: f64,
 
     pub input: String,
     pub output: String,
@@ -244,12 +244,12 @@ impl Media {
     /// uses the parameters and the input to create the output
     pub async fn create(self) -> Result<(), String> {
         let seek = self.start.to_string();
-        let dur = self.dur.to_string();
+        let end = self.end.to_string();
 
         #[rustfmt::skip]
         let mut args = vec![
             "-ss",  &seek,
-            "-t",   &dur,
+            "-to",  &end,
             "-i",   &self.input,
         ];
 
