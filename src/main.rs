@@ -494,6 +494,11 @@ impl State {
         Task::batch(tasks)
     }
 
+    /// this function should make sure that the start and end values are reasonable,
+    /// regardless of when it is called.
+    ///
+    /// It is however a little disruptive to user input;
+    /// call this function when user input has ceased.
     fn clamp_numbers(&mut self) {
         if self.media.start < 0.0 {
             self.media.start = -self.media.start;
@@ -515,14 +520,16 @@ impl State {
         }
     }
 
+    /// updates `self.media` by calling ffmpeg on `self.media.input`.
+    /// importantly, previews should be updated by the task it returns
     fn update_from_input(&mut self) -> Result<Task<Message>, ffmpeg::Error> {
         self.input_length = self.media.update_video_params()?;
 
         Ok(Task::batch([
-            // Set the end to the duration of the video
+            // doing this through a Task causes the previews to update indirectly
             Task::done(Message::EagerEndChange(self.input_length)),
             if self.media.output.is_empty() || self.output_is_generated {
-                // Generate a output path if there is none from user input
+                // generate a output path if there is none from user input
                 self.generate_output_path()
             } else {
                 Task::none()
@@ -545,8 +552,12 @@ impl State {
         Task::perform(self.media.clone().create(), Message::InstantiateFinished)
     }
 
-    /// makes a batch of tasks to create start and end preview images
+    /// makes a batch of `Task`s to create start and end preview images
     /// no effect if use_video is false
+    ///
+    /// NOTE: determining `Preview`s is done in sync,
+    /// so be very careful chaining this after tasks that change `self.media`
+    /// as it will cause unintuitive behavior
     fn create_preview_images(&mut self) -> Task<Message> {
         if !self.media.use_video {
             return Task::none();
