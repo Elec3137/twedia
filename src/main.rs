@@ -608,7 +608,7 @@ fn main() -> Result<(), iced::Error> {
                 danger: color!(0xff0000),
             },
         ))
-        .window_size((1000, 600))
+        .window_size((1000, 650))
         .run()?;
 
     Ok(())
