@@ -151,7 +151,7 @@ impl State {
                 if let Ok(float) = self.start.parse() {
                     self.media.start = float;
                     self.number_changed = true;
-                    return self.check_inputs();
+                    return self.create_preview_images();
                 }
             }
             Message::EndChange(val) => {
@@ -159,7 +159,7 @@ impl State {
                 if let Ok(float) = self.end.parse() {
                     self.media.end = float;
                     self.number_changed = true;
-                    return self.check_inputs();
+                    return self.create_preview_images();
                 }
             }
 
