@@ -86,7 +86,6 @@ struct State {
     start: String,
     end: String,
 
-    input_changed: bool,
     input_exists: bool,
 
     input_length: f64,
@@ -125,7 +124,7 @@ impl State {
         match message {
             Message::InputChange(str) => {
                 self.media.input = str;
-                self.input_changed = true;
+
                 match fs::metadata(&self.media.input) {
                     Ok(metadata) => self.input_exists = metadata.is_file(),
                     Err(e) if e.kind() == io::ErrorKind::NotFound => self.input_exists = false,
@@ -133,6 +132,16 @@ impl State {
                         "failed to check if input '{}' exists: {e}",
                         self.media.input
                     ),
+                }
+
+                if self.input_exists {
+                    match self.update_from_input() {
+                        Err(e) => {
+                            eprintln!("failed to inspect input media '{}': {e}", self.media.input)
+                        }
+
+                        Ok(task) => return task,
+                    }
                 }
             }
             Message::OutputChange(str, is_generated) => {
@@ -469,27 +478,12 @@ impl State {
         if self.number_changed {
             self.clamp_numbers();
 
-            // only create preview images if we weren't going to do that later anyway
-            if !self.input_changed {
-                tasks.push(self.create_preview_images());
-            }
+            tasks.push(self.create_preview_images());
 
             self.number_changed = false;
         }
-        if self.input_changed {
-            match self.update_from_input() {
-                Err(e) => eprintln!("failed to inspect input media '{}': {e}", self.media.input),
-                Ok(task) => {
-                    tasks.push(task.chain(Task::done(Message::Update)));
-                }
-            }
 
-            self.input_changed = false;
-        // this is "else" because Self::update_from_input
-        // already generates an output path
-        } else if self.media.output.is_empty()
-            && !self.output_is_generated
-            && !self.media.input.is_empty()
+        if self.media.output.is_empty() && !self.output_is_generated && !self.media.input.is_empty()
         {
             tasks.push(self.generate_output_path());
         }
@@ -522,11 +516,6 @@ impl State {
     }
 
     fn update_from_input(&mut self) -> Result<Task<Message>, ffmpeg::Error> {
-        if !self.input_exists {
-            eprintln!("input_exists is set to false, not attempting to update from input");
-            return Err(ffmpeg::Error::Unknown);
-        }
-
         self.input_length = self.media.update_video_params()?;
 
         Ok(Task::batch([
