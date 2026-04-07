@@ -145,6 +145,7 @@ impl Player {
             &length_arg,
             "--no-config",
             "--volume=70",
+            "--terminal=no",
             &preview.input,
         ];
 
