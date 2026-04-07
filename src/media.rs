@@ -30,7 +30,11 @@ impl Display for PreviewError {
         }
     }
 }
-
+impl From<ffmpeg::Error> for PreviewError {
+    fn from(value: ffmpeg::Error) -> Self {
+        PreviewError::Raw(value)
+    }
+}
 impl std::error::Error for PreviewError {}
 
 impl Preview {
@@ -38,21 +42,16 @@ impl Preview {
         self,
         prev_hash: u64,
     ) -> Result<(widget::image::Handle, u64), PreviewError> {
-        let mut ictx = ffmpeg::format::input(&self.input).map_err(PreviewError::Raw)?;
+        let mut ictx = ffmpeg::format::input(&self.input)?;
 
         let input = ictx
             .streams()
             .best(ffmpeg_next::media::Type::Video)
-            .ok_or(ffmpeg::Error::StreamNotFound)
-            .map_err(PreviewError::Raw)?;
+            .ok_or(ffmpeg::Error::StreamNotFound)?;
 
-        let context_decoder = ffmpeg::codec::context::Context::from_parameters(input.parameters())
-            .map_err(PreviewError::Raw)?;
+        let context_decoder = ffmpeg::codec::context::Context::from_parameters(input.parameters())?;
 
-        let mut decoder = context_decoder
-            .decoder()
-            .video()
-            .map_err(PreviewError::Raw)?;
+        let mut decoder = context_decoder.decoder().video()?;
 
         let mut scalar = ffmpeg::software::scaling::Context::get(
             decoder.format(),
@@ -62,15 +61,13 @@ impl Preview {
             decoder.width(),
             decoder.height(),
             ffmpeg::software::scaling::Flags::BILINEAR,
-        )
-        .map_err(PreviewError::Raw)?;
+        )?;
 
         let target_stream = input.index();
         let mut decoded = ffmpeg::util::frame::video::Video::empty();
         let mut rgb_frame = ffmpeg::util::frame::video::Video::empty();
 
-        ictx.seek((self.seek * 1_000_000.0).round() as i64, i64::MIN..i64::MAX)
-            .map_err(PreviewError::Raw)?;
+        ictx.seek((self.seek * 1_000_000.0).round() as i64, i64::MIN..i64::MAX)?;
 
         for packet in ictx.packets().filter_map(|(stream, packet)| {
             if stream.index() == target_stream {
@@ -93,7 +90,7 @@ impl Preview {
                 return Err(PreviewError::SameHash);
             }
 
-            decoder.send_packet(&packet).map_err(PreviewError::Raw)?;
+            decoder.send_packet(&packet)?;
 
             match decoder.receive_frame(&mut decoded) {
                 // skip the rest of the loop on benign "Resource temporarily unavailable" error
@@ -102,9 +99,7 @@ impl Preview {
                 _ => {}
             }
 
-            scalar
-                .run(&decoded, &mut rgb_frame)
-                .map_err(PreviewError::Raw)?;
+            scalar.run(&decoded, &mut rgb_frame)?;
 
             let mut buf = Vec::new();
             for (i, rgb) in rgb_frame.data(0).iter().enumerate() {
