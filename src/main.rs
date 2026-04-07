@@ -496,10 +496,10 @@ impl State {
 
     fn clamp_numbers(&mut self) {
         if self.media.start < 0.0 {
-            self.media.start = 0.0;
+            self.media.start = -self.media.start;
         }
         if self.media.end < 0.0 {
-            self.media.end = 0.0;
+            self.media.end = -self.media.end;
         }
 
         if self.media.end > self.input_length {
