@@ -96,6 +96,7 @@ struct State {
 
     output_is_generated: bool,
     output_folder_exists: bool,
+    output_file_exists: bool,
 
     error: String,
     status: String,
@@ -147,9 +148,16 @@ impl State {
                 if let Some(path) = Path::new(&self.media.output).parent()
                     && let Ok(exists) = path
                         .try_exists()
-                        .inspect_err(|e| eprintln!("failed to check if output path exists: {e}"))
+                        .inspect_err(|e| eprintln!("failed to check if output folder exists: {e}"))
                 {
                     self.output_folder_exists = exists;
+
+                    // also check the child
+                    if let Ok(exists) = fs::exists(&self.media.output)
+                        .inspect_err(|e| eprintln!("failed to check if output file exists: {e}"))
+                    {
+                        self.output_file_exists = exists;
+                    };
                 }
             }
             Message::StartChange(val) => {
@@ -382,7 +390,9 @@ impl State {
             .on_submit(Message::Submitted);
         let output_picker = widget::button("pick folder")
             .on_press(Message::PickOutput)
-            .style(if self.output_folder_exists {
+            .style(if self.output_file_exists {
+                widget::button::danger
+            } else if self.output_folder_exists {
                 widget::button::primary
             } else {
                 widget::button::warning
