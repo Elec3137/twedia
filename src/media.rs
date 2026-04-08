@@ -65,7 +65,7 @@ impl Preview {
 
         let target_stream = input.index();
         let mut decoded = ffmpeg::util::frame::video::Video::empty();
-        let mut rgb_frame = ffmpeg::util::frame::video::Video::empty();
+        let mut rgba_frame = ffmpeg::util::frame::video::Video::empty();
 
         ictx.seek((self.seek * 1_000_000.0).round() as i64, i64::MIN..i64::MAX)?;
 
@@ -99,12 +99,12 @@ impl Preview {
                 _ => {}
             }
 
-            scalar.run(&decoded, &mut rgb_frame)?;
+            scalar.run(&decoded, &mut rgba_frame)?;
 
             let handle = widget::image::Handle::from_rgba(
-                rgb_frame.width(),
-                rgb_frame.height(),
-                rgb_frame.data(0).to_vec(),
+                rgba_frame.width(),
+                rgba_frame.height(),
+                rgba_frame.data(0).to_vec(),
             );
 
             return Ok((handle, new_hash));
