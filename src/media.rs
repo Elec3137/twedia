@@ -57,7 +57,7 @@ impl Preview {
             decoder.format(),
             decoder.width(),
             decoder.height(),
-            ffmpeg::format::Pixel::RGB24,
+            ffmpeg::format::Pixel::RGBA,
             decoder.width(),
             decoder.height(),
             ffmpeg::software::scaling::Flags::BILINEAR,
@@ -101,16 +101,11 @@ impl Preview {
 
             scalar.run(&decoded, &mut rgb_frame)?;
 
-            let mut buf = Vec::new();
-            for (i, rgb) in rgb_frame.data(0).iter().enumerate() {
-                buf.push(*rgb);
-                if (i + 1) % 3 == 0 {
-                    buf.push(u8::MAX);
-                }
-            }
-
-            let handle =
-                widget::image::Handle::from_rgba(rgb_frame.width(), rgb_frame.height(), buf);
+            let handle = widget::image::Handle::from_rgba(
+                rgb_frame.width(),
+                rgb_frame.height(),
+                rgb_frame.data(0).to_vec(),
+            );
 
             return Ok((handle, new_hash));
         }
