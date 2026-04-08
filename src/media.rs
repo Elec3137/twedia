@@ -188,6 +188,22 @@ impl Player {
         is_active
     }
 
+    pub async fn wait(&mut self) {
+        if let Some(ref mut child) = self.0 {
+            match &child.status().await {
+                Ok(status) => {
+                    if !status.success() {
+                        eprintln!("player failed with status: {status}");
+                    }
+                }
+                Err(e) => {
+                    eprintln!("failed to check status of player: {e}");
+                }
+            }
+        }
+        self.0 = None;
+    }
+
     fn kill(&mut self) -> io::Result<()> {
         if let Some(ref mut child) = self.0 {
             child.kill()

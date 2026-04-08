@@ -55,6 +55,7 @@ enum Message {
 
     PlayStartPreview,
     PlayEndPreview,
+    PlayFinished,
 
     Event(Event),
 
@@ -77,6 +78,7 @@ struct PreviewState {
     end_task_handle: Option<task::Handle>,
 
     player: media::Player,
+    player_is_active: bool,
 }
 
 #[derive(Debug, Default)]
@@ -241,12 +243,15 @@ impl State {
                 self.previews
                     .player
                     .toggle_preview(&self.media, self.media.start);
+                return Task::perform(self.previews.player.wait(), |()| Message::PlayFinished);
             }
             Message::PlayEndPreview => {
                 self.previews
                     .player
                     .toggle_preview(&self.media, self.media.end - 5.0);
+                return Task::perform(self.previews.player.wait(), |()| Message::PlayFinished);
             }
+            Message::PlayFinished => self.previews.player_is_active = false,
 
             Message::Event(Event::Keyboard(keyboard::Event::KeyPressed {
                 key, modifiers, ..
@@ -428,9 +433,17 @@ impl State {
         let instantiate_button = widget::button("Instantiate!").on_press(Message::Instantiate);
         let duration_string = format!("Duration: {} seconds", self.media.end - self.media.start);
 
-        let start_play_button =
-            widget::button("play start preview").on_press(Message::PlayStartPreview);
-        let end_play_button = widget::button("play end preview").on_press(Message::PlayEndPreview);
+        let play_button_style = if self.previews.player_is_active {
+            widget::button::danger
+        } else {
+            widget::button::primary
+        };
+        let start_play_button = widget::button("play start preview")
+            .on_press(Message::PlayStartPreview)
+            .style(play_button_style);
+        let end_play_button = widget::button("play end preview")
+            .on_press(Message::PlayEndPreview)
+            .style(play_button_style);
 
         #[rustfmt::skip]
         return widget::column![
