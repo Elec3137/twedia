@@ -250,7 +250,7 @@ impl Media {
         #[rustfmt::skip]
         let mut args = vec![
             "-loglevel", "quiet",
-            "-n",
+            "-y",
             "-ss",  &seek,
             "-to",  &end,
             "-i",   &self.input,
