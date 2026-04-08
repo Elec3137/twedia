@@ -42,6 +42,15 @@ cargo run # or `nix run`
 
 0. add feedback for when a preview is playing (eg red buttons)
 
+    after trying to implement this, I realized this requires two different processes to call mutable methods on the `Child`:
+    1. the process that waits for the `Child` to exit
+    2. the process that might kill the `Child` due to a second press of the button
+
+    I can think of three possible solutions:
+    1. using another interface for controlling child processes
+    2. storing the PID instead of working with the `Child` object
+    3. mutable statics
+
 1. obsolete the CLI for creating and writing the final output
 
 2. test nix builds with other linux distributions
@@ -52,11 +61,9 @@ cargo run # or `nix run`
 
 ## style
 
-1. de-monolithize `State::check_inputs`
+1. use pipewire in flatpak [issue](https://github.com/flatpak/flatpak/issues/5130)
 
-2. use pipewire in flatpak [issue](https://github.com/flatpak/flatpak/issues/5130)
-
-3. use enum `Extreme` for differentiating `End` and `Start` for previews, to reduce code repetition
+2. consider using enum `Extreme` for differentiating `End` and `Start` for previews, to reduce code repetition
 
 ## cosmic
 
