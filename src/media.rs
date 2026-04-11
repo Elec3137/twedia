@@ -238,62 +238,76 @@ pub struct Media {
 
 impl Media {
     /// uses the parameters and the input to create the output
-    pub async fn create(self) -> Result<(), String> {
-        let seek = self.start.to_string();
-        let end = self.end.to_string();
+    pub async fn create(self) -> Result<(), ffmpeg::Error> {
+        let mut ictx = ffmpeg::format::input(&self.input)?;
+        let mut octx = ffmpeg::format::output(&self.output)?;
 
-        #[rustfmt::skip]
-        let mut args = vec![
-            "-loglevel", "warning",
-            "-y",
-            "-ss",  &seek,
-            "-to",  &end,
-            "-i",   &self.input,
-        ];
+        ictx.seek(
+            (self.start * 1_000_000.0).round() as i64,
+            i64::MIN..i64::MAX,
+        )?;
 
-        if self.use_audio {
-            args.push("-c:a");
-            args.push("copy");
-        } else {
-            args.push("-an");
-        }
-
-        if self.use_video {
-            args.push("-c:v");
-            args.push("copy");
-        } else {
-            args.push("-vn");
-        }
-
-        if self.use_subs {
-            args.push("-c:s");
-            args.push("copy");
-        } else {
-            args.push("-sn");
-        }
-
-        if self.use_extra_streams {
-            args.push("-map");
-            args.push("0");
-        }
-
-        args.push(&self.output);
-
-        match process::Command::new("ffmpeg").args(&args).spawn() {
-            Err(e) => Err(e.to_string()),
-            Ok(mut child) => match child.status().await {
-                Err(e) => Err(e.to_string()),
-                Ok(status) => {
-                    if status.success() {
-                        Ok(())
-                    } else {
-                        Err(format!(
-                            "ffmpeg returned {status}. Check stderr for full error"
-                        ))
-                    }
+        let mut stream_mapping = vec![0; ictx.nb_streams() as _];
+        let mut ist_time_bases = vec![ffmpeg::Rational(0, 1); ictx.nb_streams() as _];
+        let mut ost_index = 0;
+        for (ist_index, ist) in ictx.streams().enumerate() {
+            let ist_medium = ist.parameters().medium();
+            if !{
+                use ffmpeg::media::Type;
+                match ist_medium {
+                    Type::Video => self.use_video,
+                    Type::Audio => self.use_audio,
+                    Type::Subtitle => self.use_subs,
+                    _ => self.use_extra_streams,
                 }
-            },
+            } {
+                stream_mapping[ist_index] = -1;
+                continue;
+            }
+            stream_mapping[ist_index] = ost_index;
+            ist_time_bases[ist_index] = ist.time_base();
+            ost_index += 1;
+            let mut ost = octx.add_stream(ffmpeg::encoder::find(ffmpeg::codec::Id::None))?;
+            ost.set_parameters(ist.parameters());
+            // We need to set codec_tag to 0 lest we run into incompatible codec tag
+            // issues when muxing into a different container format. Unfortunately
+            // there's no high level API to do this (yet).
+            unsafe {
+                (*ost.parameters().as_mut_ptr()).codec_tag = 0;
+            }
         }
+
+        octx.set_metadata(ictx.metadata().to_owned());
+        octx.write_header()?;
+
+        for (stream, mut packet) in ictx.packets() {
+            assert_ne!(stream.time_base().numerator(), 0);
+
+            if packet
+                .pts()
+                .expect("packet should contain a Presentation TimeStamp")
+                >= (self.end / f64::from(stream.time_base())).round() as i64
+            {
+                continue;
+            }
+
+            let ist_index = stream.index();
+            let ost_index = stream_mapping[ist_index];
+            if ost_index < 0 {
+                continue;
+            }
+            let ost = octx
+                .stream(ost_index as _)
+                .expect("there should always be an output stream at this index");
+            packet.rescale_ts(ist_time_bases[ist_index], ost.time_base());
+            packet.set_position(-1);
+            packet.set_stream(ost_index as _);
+            packet.write_interleaved(&mut octx)?;
+        }
+
+        octx.write_trailer()?;
+
+        Ok(())
     }
 
     /// updates the Media with the input parameters, returning the input length.

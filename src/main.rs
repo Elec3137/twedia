@@ -59,7 +59,7 @@ enum Message {
     Event(Event),
 
     Instantiate,
-    InstantiateFinished(Result<(), String>),
+    InstantiateFinished(Result<(), ffmpeg::Error>),
 }
 
 #[derive(Debug, Default)]
@@ -344,7 +344,7 @@ impl State {
                     self.status = "Finished".to_string();
                     return window::latest().and_then(window::close);
                 }
-                Err(e) => self.error = e,
+                Err(e) => self.error = e.to_string(),
             },
         }
 
