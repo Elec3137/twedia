@@ -436,7 +436,10 @@ impl State {
         };
 
         let instantiate_button = widget::button("Instantiate!").on_press(Message::Instantiate);
-        let duration_string = format!("Duration: {} seconds", self.media.end - self.media.start);
+        let duration_text = widget::text(format!(
+            "Duration: {} seconds",
+            self.media.end - self.media.start
+        ));
 
         let start_play_button =
             widget::button("play start preview").on_press(Message::PlayStartPreview);
@@ -464,7 +467,7 @@ impl State {
 
             widget::row![
                 start_play_button,
-                widget::text("Press Shift-Enter, or:"), instantiate_button, widget::text(duration_string),
+                widget::text("Press Shift-Enter, or:"), instantiate_button, duration_text,
                 end_play_button,
                 ]
                 .spacing(10)
