@@ -439,9 +439,9 @@ impl State {
                 .height(Length::Fill);
 
             if self.is_vertical {
-                widget::row![start, end].into()
+                widget::row![start, end].spacing(5).into()
             } else {
-                widget::column![start, end].into()
+                widget::column![start, end].spacing(5).into()
             }
         } else {
             widget::space().into()
@@ -494,6 +494,7 @@ impl State {
                 .align_y(Vertical::Center)
         ]
         .spacing(20)
+        .padding(20)
         .align_x(Horizontal::Center)
         .into();
     }
