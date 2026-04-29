@@ -3,7 +3,7 @@ use std::{
     hash::{DefaultHasher, Hash, Hasher},
 };
 
-use iced::widget;
+use iced::{Size, widget};
 use smol::{io, process};
 
 use ffmpeg_next as ffmpeg;
@@ -41,7 +41,7 @@ impl Preview {
     pub async fn decode_image(
         self,
         prev_hash: u64,
-    ) -> Result<(widget::image::Handle, u64), PreviewError> {
+    ) -> Result<(widget::image::Handle, u64, Size), PreviewError> {
         let mut ictx = ffmpeg::format::input(&self.input)?;
 
         let input = ictx
@@ -107,7 +107,11 @@ impl Preview {
                 rgba_frame.data(0).to_vec(),
             );
 
-            return Ok((handle, new_hash));
+            return Ok((
+                handle,
+                new_hash,
+                Size::new(rgba_frame.width() as f32, rgba_frame.height() as f32),
+            ));
         }
 
         Err(PreviewError::NoPackets)

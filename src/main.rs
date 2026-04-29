@@ -6,7 +6,7 @@ use std::{
 use ffmpeg_next as ffmpeg;
 
 use iced::{
-    Color, Element, Event, Length, Subscription, Task, Theme,
+    Color, Element, Event, Length, Size, Subscription, Task, Theme,
     alignment::{Horizontal, Vertical},
     color, event,
     keyboard::{self, Key, key},
@@ -47,8 +47,8 @@ enum Message {
 
     Update,
 
-    LoadedStartPreview(Result<(widget::image::Handle, u64), PreviewError>),
-    LoadedEndPreview(Result<(widget::image::Handle, u64), PreviewError>),
+    LoadedStartPreview(Result<(widget::image::Handle, u64, Size), PreviewError>),
+    LoadedEndPreview(Result<(widget::image::Handle, u64, Size), PreviewError>),
 
     AllocatedStartPreview(Result<widget::image::Allocation, widget::image::Error>),
     AllocatedEndPreview(Result<widget::image::Allocation, widget::image::Error>),
@@ -64,6 +64,8 @@ enum Message {
 
 #[derive(Debug, Default)]
 struct PreviewState {
+    size: Size,
+
     last_start: Preview,
     last_end: Preview,
 
@@ -81,6 +83,9 @@ struct PreviewState {
 
 #[derive(Debug, Default)]
 struct State {
+    size: Size,
+    is_vertical: bool,
+
     media: Media,
 
     start: String,
@@ -221,13 +226,19 @@ impl State {
             Message::ToggleSubs => self.media.use_subs.toggle(),
             Message::ToggleExtraStreams => self.media.use_extra_streams.toggle(),
 
-            Message::LoadedStartPreview(Ok((handle, hash))) => {
+            Message::LoadedStartPreview(Ok((handle, hash, size))) => {
                 self.previews.last_start_hash = hash;
+
+                self.previews.size = size;
+                self.check_if_vertical();
 
                 return widget::image::allocate(handle).map(Message::AllocatedStartPreview);
             }
-            Message::LoadedEndPreview(Ok((handle, hash))) => {
+            Message::LoadedEndPreview(Ok((handle, hash, size))) => {
                 self.previews.last_end_hash = hash;
+
+                self.previews.size = size;
+                self.check_if_vertical();
 
                 return widget::image::allocate(handle).map(Message::AllocatedEndPreview);
             }
@@ -331,6 +342,11 @@ impl State {
                 // ignore unbound keys
                 _ => {}
             },
+            Message::Event(Event::Window(window::Event::Resized(new_size))) => {
+                self.size = new_size;
+                self.check_if_vertical();
+            }
+
             // ignore all non-keyboard events
             Message::Event(_) => {}
 
@@ -411,20 +427,24 @@ impl State {
             .on_toggle(|_| Message::ToggleExtraStreams)
             .label("extra streams");
 
-        let preview_row = if self.media.use_video
+        let preview_field: Element<_> = if self.media.use_video
             && let Some(start) = &self.previews.start
             && let Some(end) = &self.previews.end
         {
-            widget::row![
-                widget::image(start.handle())
-                    .width(Length::Fill)
-                    .height(Length::Fill),
-                widget::image(end.handle())
-                    .width(Length::Fill)
-                    .height(Length::Fill)
-            ]
+            let start = widget::image(start.handle())
+                .width(Length::Fill)
+                .height(Length::Fill);
+            let end = widget::image(end.handle())
+                .width(Length::Fill)
+                .height(Length::Fill);
+
+            if self.is_vertical {
+                widget::row![start, end].into()
+            } else {
+                widget::column![start, end].into()
+            }
         } else {
-            widget::row![]
+            widget::space().into()
         };
 
         let status_display = if !self.error.is_empty() {
@@ -461,7 +481,7 @@ impl State {
 
             widget::row![output_field, output_picker],
 
-            preview_row,
+            preview_field,
 
             status_display,
 
@@ -601,6 +621,11 @@ impl State {
                 task
             },
         ])
+    }
+
+    fn check_if_vertical(&mut self) {
+        self.is_vertical =
+            self.previews.size.get_aspect_ratio() < self.size.get_aspect_ratio() * 1.5;
     }
 }
 
