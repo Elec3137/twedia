@@ -162,8 +162,8 @@ impl Player {
         Ok(())
     }
 
-    fn child_is_active(&mut self) -> bool {
-        match self.0 {
+    fn is_active(&mut self) -> bool {
+        let is_active = match self.0 {
             Some(ref mut child) => match &child.try_status() {
                 Ok(opt) => match opt {
                     Some(status) => {
@@ -180,11 +180,8 @@ impl Player {
                 }
             },
             None => false,
-        }
-    }
+        };
 
-    fn is_active(&mut self) -> bool {
-        let is_active = self.child_is_active();
         if !is_active {
             self.0 = None;
         }
