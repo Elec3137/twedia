@@ -53,8 +53,7 @@ enum Message {
     AllocatedStartPreview(Result<widget::image::Allocation, widget::image::Error>),
     AllocatedEndPreview(Result<widget::image::Allocation, widget::image::Error>),
 
-    PlayStartPreview,
-    PlayEndPreview,
+    PlayPreview,
 
     Event(Event),
 
@@ -256,15 +255,8 @@ impl State {
                 eprintln!("failed to allocate preview: {e}")
             }
 
-            Message::PlayStartPreview => {
-                self.previews
-                    .player
-                    .toggle_preview(&self.media, self.media.start);
-            }
-            Message::PlayEndPreview => {
-                self.previews
-                    .player
-                    .toggle_preview(&self.media, self.media.end - 5.0);
+            Message::PlayPreview => {
+                self.previews.player.toggle_preview_of(&self.media);
             }
 
             Message::Event(Event::Keyboard(keyboard::Event::KeyPressed {
@@ -321,13 +313,7 @@ impl State {
                     return Task::done(Message::PickOutput);
                 }
 
-                Key::Character("p") => {
-                    return Task::done(if modifiers.shift() {
-                        Message::PlayEndPreview
-                    } else {
-                        Message::PlayStartPreview
-                    });
-                }
+                Key::Character("p") => return Task::done(Message::PlayPreview),
 
                 Key::Character("q") => {
                     return window::latest().and_then(window::close);
@@ -461,9 +447,7 @@ impl State {
             self.media.end - self.media.start
         ));
 
-        let start_play_button =
-            widget::button("play start preview").on_press(Message::PlayStartPreview);
-        let end_play_button = widget::button("play end preview").on_press(Message::PlayEndPreview);
+        let play_button = widget::button("play preview").on_press(Message::PlayPreview);
 
         #[rustfmt::skip]
         return widget::column![
@@ -486,9 +470,8 @@ impl State {
             status_display,
 
             widget::row![
-                start_play_button,
+                play_button,
                 widget::text("Press Shift-Enter, or:"), instantiate_button, duration_text,
-                end_play_button,
                 ]
                 .spacing(10)
                 .align_y(Vertical::Center)

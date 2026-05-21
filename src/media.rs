@@ -126,13 +126,15 @@ impl Player {
     /// discarding the handle to the previous one
     pub fn play(
         &mut self,
-        preview: Preview,
-        secs: isize,
+        path: &str,
+        start: usize,
+        length: usize,
         video: bool,
         audio: bool,
+        subs: bool,
     ) -> io::Result<()> {
-        let start_arg = format!("--start={}", preview.seek);
-        let length_arg = format!("--length={}", secs);
+        let start_arg = format!("--start={}", start);
+        let length_arg = format!("--length={}", length);
 
         let mut args = vec![
             &start_arg,
@@ -140,7 +142,7 @@ impl Player {
             "--no-config",
             "--volume=70",
             "--terminal=no",
-            &preview.input,
+            path.as_ref(),
         ];
 
         if !video {
@@ -150,6 +152,9 @@ impl Player {
         }
         if !audio {
             args.push("--audio=no");
+        }
+        if !subs {
+            args.push("--sub=no");
         }
 
         self.0 = Some(process::Command::new("mpv").args(args).spawn()?);
@@ -195,27 +200,38 @@ impl Player {
         }
     }
 
-    fn toggle(&mut self, preview: Preview, secs: isize, video: bool, audio: bool) {
+    fn toggle(
+        &mut self,
+        path: &str,
+        start: usize,
+        length: usize,
+        video: bool,
+        audio: bool,
+        subs: bool,
+    ) {
         if self.is_active() {
             #[allow(unused_must_use)]
             self.kill()
                 .inspect_err(|e| eprintln!("failed to kill player: {e}"));
         } else {
             #[allow(unused_must_use)]
-            self.play(preview, secs, video, audio)
+            self.play(path, start, length, video, audio, subs)
                 .inspect_err(|e| eprintln!("failed to play preview: {e}"));
         }
     }
 
-    pub fn toggle_preview(&mut self, media: &Media, seek: f64) {
+    /// Higher level function that calls `Self::toggle`
+    /// using the field of the `Media` type.
+    ///
+    /// Note: does not use `Media::output` or `Media::use_extra_streams`
+    pub fn toggle_preview_of(&mut self, media: &Media) {
         self.toggle(
-            Preview {
-                seek,
-                input: media.input.clone(),
-            },
-            5,
+            &media.input,
+            media.start.round() as _,
+            (media.end - media.start).round() as _,
             media.use_video,
             media.use_audio,
+            media.use_subs,
         );
     }
 }
