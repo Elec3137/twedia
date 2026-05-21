@@ -621,7 +621,7 @@ fn main() -> Result<(), iced::Error> {
             iced::theme::Palette {
                 background: color!(0x080808),
                 text: Color::WHITE,
-                primary: color!(0x00ffff),
+                primary: color!(0xff00ff),
                 success: color!(0x00ff00),
                 warning: color!(0x880000),
                 danger: color!(0xff0000),
