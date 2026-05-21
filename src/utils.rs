@@ -14,7 +14,10 @@ pub trait SizeRatioExt<T> {
     fn get_aspect_ratio(&self) -> T;
 }
 
-impl<T: std::ops::Div<Output = T> + Copy> SizeRatioExt<T> for Size<T> {
+impl<T> SizeRatioExt<T> for Size<T>
+where
+    T: std::ops::Div<Output = T> + Copy,
+{
     fn get_aspect_ratio(&self) -> T {
         self.width / self.height
     }
