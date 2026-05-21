@@ -142,7 +142,7 @@ impl Player {
             "--no-config",
             "--volume=70",
             "--terminal=no",
-            path.as_ref(),
+            path,
         ];
 
         if !video {
