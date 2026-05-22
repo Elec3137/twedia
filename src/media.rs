@@ -141,15 +141,13 @@ impl Player {
             &length_arg,
             "--no-config",
             "--volume=70",
-            "--terminal=no",
+            "--player-operation-mode=pseudo-gui",
             "--keep-open",
             path,
         ];
 
         if !video {
             args.push("--video=no")
-        } else {
-            args.push("--player-operation-mode=pseudo-gui")
         }
         if !audio {
             args.push("--audio=no");
