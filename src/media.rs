@@ -217,7 +217,7 @@ impl Player {
     }
 
     /// Higher level function that calls `Self::toggle`
-    /// using the field of the `Media` type.
+    /// using the fields of the `Media` type.
     ///
     /// Note: does not use `Media::output` or `Media::use_extra_streams`
     pub fn toggle_preview_of(&mut self, media: &Media) {
