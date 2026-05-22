@@ -142,6 +142,7 @@ impl Player {
             "--no-config",
             "--volume=70",
             "--terminal=no",
+            "--keep-open",
             path,
         ];
 
