@@ -105,7 +105,7 @@ impl Preview {
             let handle = widget::image::Handle::from_rgba(
                 rgba_frame.width(),
                 rgba_frame.height(),
-                rgba_frame.data(0).to_vec(),
+                rgba_frame.data(0).to_owned(),
             );
 
             return Ok((
