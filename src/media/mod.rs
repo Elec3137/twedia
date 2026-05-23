@@ -89,8 +89,8 @@ impl Media {
                 first_loop = false;
             }
 
-            packet.set_pts(packet.pts().and_then(|i| Some(i - first_pts.unwrap())));
-            packet.set_dts(packet.dts().and_then(|i| Some(i - first_dts.unwrap())));
+            packet.set_pts(packet.pts().map(|i| i - first_pts.unwrap()));
+            packet.set_dts(packet.dts().map(|i| i - first_dts.unwrap()));
 
             packet.set_position(-1);
             packet.set_stream(ost_index as _);
