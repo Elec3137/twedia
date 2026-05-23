@@ -22,6 +22,8 @@ use paths::*;
 
 mod media;
 use media::*;
+use player::Player;
+use preview::Preview;
 
 #[derive(Debug, Clone)]
 enum Message {
@@ -47,8 +49,8 @@ enum Message {
 
     Update,
 
-    LoadedStartPreview(Result<(widget::image::Handle, u64, Size), PreviewError>),
-    LoadedEndPreview(Result<(widget::image::Handle, u64, Size), PreviewError>),
+    LoadedStartPreview(Result<(widget::image::Handle, u64, Size), preview::Error>),
+    LoadedEndPreview(Result<(widget::image::Handle, u64, Size), preview::Error>),
 
     AllocatedStartPreview(Result<widget::image::Allocation, widget::image::Error>),
     AllocatedEndPreview(Result<widget::image::Allocation, widget::image::Error>),
@@ -77,7 +79,7 @@ struct PreviewState {
     start_task_handle: Option<task::Handle>,
     end_task_handle: Option<task::Handle>,
 
-    player: media::Player,
+    player: Player,
 }
 
 #[derive(Debug, Default)]
@@ -242,7 +244,7 @@ impl State {
                 return widget::image::allocate(handle).map(Message::AllocatedEndPreview);
             }
             Message::LoadedStartPreview(Err(e)) | Message::LoadedEndPreview(Err(e)) => {
-                if e != PreviewError::SameHash {
+                if e != preview::Error::SameHash {
                     eprintln!("failed to load preview: {e}")
                 }
             }
