@@ -23,6 +23,8 @@ impl Media {
         let mut ictx = ffmpeg::format::input(&self.input)?;
         let mut octx = ffmpeg::format::output(&self.output)?;
 
+        // 1_000_000 is to convert seconds to ffmpeg's time scale;
+        // likely equivelent to `ffmpeg::ffi::AV_TIME_BASE`
         ictx.seek(
             (self.start * 1_000_000.0).round() as i64,
             i64::MIN..i64::MAX,
