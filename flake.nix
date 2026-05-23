@@ -35,7 +35,6 @@
         ];
 
         runtimeExes = with pkgs; [
-          ffmpeg
           mpv
         ];
         runtimeLibs = with pkgs; [
