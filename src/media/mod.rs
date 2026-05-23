@@ -61,6 +61,9 @@ impl Media {
         octx.set_metadata(ictx.metadata().to_owned());
         octx.write_header()?;
 
+        let (mut first_pts, mut first_dts) = (None, None);
+        let mut first_loop = true;
+
         for (stream, mut packet) in ictx.packets() {
             assert_ne!(stream.time_base().numerator(), 0);
 
@@ -81,12 +84,16 @@ impl Media {
                 .stream(ost_index as _)
                 .expect("there should always be an output stream at this index");
             packet.rescale_ts(ist_time_bases[ist_index], ost.time_base());
-            packet.set_pts(packet.pts().and_then(|i| {
-                Some((i as f64 - (self.start / f64::from(stream.time_base()))).round() as i64)
-            }));
-            packet.set_dts(packet.dts().and_then(|i| {
-                Some((i as f64 - (self.start / f64::from(stream.time_base()))).round() as i64)
-            }));
+
+            if first_loop {
+                first_pts = packet.pts();
+                first_dts = packet.dts();
+                first_loop = false;
+            }
+
+            packet.set_pts(packet.pts().and_then(|i| Some(i - first_pts.unwrap())));
+            packet.set_dts(packet.dts().and_then(|i| Some(i - first_dts.unwrap())));
+
             packet.set_position(-1);
             packet.set_stream(ost_index as _);
             packet.write_interleaved(&mut octx)?;
