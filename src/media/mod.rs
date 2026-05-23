@@ -3,6 +3,9 @@ use ffmpeg_next as ffmpeg;
 pub mod player;
 pub mod preview;
 
+#[cfg(test)]
+mod tests;
+
 #[derive(Debug, Default, PartialEq, Clone)]
 pub struct Media {
     pub start: f64,

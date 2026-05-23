@@ -105,6 +105,8 @@
                 ];
               buildInputs = commonArgs.buildInputs;
 
+              doCheck = false;
+
               postFixup = ''
                 mkdir -p "$out/share/applications"
                 ln -s "${desktopItem}"/share/applications/* "$out/share/applications/"
@@ -137,9 +139,6 @@
         };
 
         checks = {
-          # Build the crate as part of `nix flake check` for convenience
-          inherit crate;
-
           # Run clippy on the crate source, resuing the dependency artifacts
           # (e.g. from build scripts or proc-macros) from above.
           #
@@ -149,7 +148,15 @@
             commonArgs
             // {
               inherit cargoArtifacts;
-              cargoClippyExtraArgs = "-- --deny warnings";
+
+              cargoClippyExtraArgs = "-- --deny warnings && cargo test --release";
+
+              env = {
+                TESTFILE0 = pkgs.fetchurl {
+                  url = "https://github.com/Elec3137/test-files/raw/refs/heads/main/chud.webm";
+                  hash = "sha256-Z0p6mbJxWloCXzSongUs27XzLPCu9lPSbSSAYbwCHWg=";
+                };
+              };
             }
           );
         };
