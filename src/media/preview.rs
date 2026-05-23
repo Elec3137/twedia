@@ -66,9 +66,10 @@ impl Preview {
         let mut decoded = ffmpeg::util::frame::video::Video::empty();
         let mut rgba_frame = ffmpeg::util::frame::video::Video::empty();
 
-        // 1_000_000 is to convert seconds to ffmpeg's time scale;
-        // likely equivelent to `ffmpeg::ffi::AV_TIME_BASE`
-        ictx.seek((self.seek * 1_000_000.0).round() as i64, i64::MIN..i64::MAX)?;
+        ictx.seek(
+            (self.seek * f64::from(ffmpeg::ffi::AV_TIME_BASE)).round() as i64,
+            i64::MIN..i64::MAX,
+        )?;
 
         for packet in ictx.packets().filter_map(|(stream, packet)| {
             if stream.index() == target_stream {
