@@ -29,7 +29,6 @@ impl Media {
         )?;
 
         let mut stream_mapping = vec![0; ictx.nb_streams() as _];
-        let mut ist_time_bases = vec![ffmpeg::Rational(0, 1); ictx.nb_streams() as _];
         let mut ost_index = 0;
         for (ist_index, ist) in ictx.streams().enumerate() {
             let ist_medium = ist.parameters().medium();
@@ -46,7 +45,6 @@ impl Media {
                 continue;
             }
             stream_mapping[ist_index] = ost_index;
-            ist_time_bases[ist_index] = ist.time_base();
             ost_index += 1;
             let mut ost = octx.add_stream(ffmpeg::encoder::find(ffmpeg::codec::Id::None))?;
             ost.set_parameters(ist.parameters());
@@ -83,7 +81,7 @@ impl Media {
             let ost = octx
                 .stream(ost_index as _)
                 .expect("there should always be an output stream at this index");
-            packet.rescale_ts(ist_time_bases[ist_index], ost.time_base());
+            packet.rescale_ts(stream.time_base(), ost.time_base());
 
             if first_loop {
                 first_pts = packet.pts();
