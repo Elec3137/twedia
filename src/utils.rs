@@ -22,3 +22,15 @@ where
         self.width / self.height
     }
 }
+
+use std::hash::{DefaultHasher, Hash, Hasher};
+/// takes the hash of a single slice and returns it
+///
+/// convinience function to avoid manually creating a Hasher,
+/// only to discard it after using it once.
+#[inline]
+pub fn hash_chunk<T: Hash>(t: &[T]) -> u64 {
+    let mut s = DefaultHasher::new();
+    Hash::hash_slice(t, &mut s);
+    s.finish()
+}

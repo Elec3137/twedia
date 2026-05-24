@@ -40,8 +40,8 @@ fn test_decode_image() {
     };
 
     assert_eq!(
-        block_on(preview.decode_image(7643434088042966607)),
+        block_on(preview.decode_image(13300275450624329887)),
         Err(preview::Error::SameHash),
-        "decoded image hash test"
+        "packet hash test"
     );
 }

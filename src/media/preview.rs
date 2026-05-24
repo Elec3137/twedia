@@ -1,7 +1,4 @@
-use std::{
-    fmt::{self, Display},
-    hash::{DefaultHasher, Hash, Hasher},
-};
+use std::fmt::{self, Display};
 
 use iced::{Size, widget};
 
@@ -85,9 +82,7 @@ impl Preview {
                 continue;
             }
 
-            let mut hasher = DefaultHasher::new();
-            packet.data().hash(&mut hasher);
-            let new_hash = hasher.finish();
+            let new_hash = utils::hash_chunk(packet.data().unwrap());
 
             // make sure that the hash is different before decoding
             if new_hash == prev_hash {
