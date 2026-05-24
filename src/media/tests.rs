@@ -1,3 +1,5 @@
+use crate::utils;
+
 use super::*;
 
 use smol::block_on;
@@ -40,8 +42,23 @@ fn test_decode_image() {
     };
 
     assert_eq!(
-        block_on(preview.decode_image(13300275450624329887)),
+        block_on(preview.clone().decode_image(13300275450624329887)),
         Err(preview::Error::SameHash),
         "packet hash test"
+    );
+
+    let image = block_on(preview.decode_image(0)).map(|(image, _, _)| image);
+    assert_eq!(
+        image.clone().map(|i| match i {
+            iced::widget::image::Handle::Rgba {
+                id: _,
+                width: _,
+                height: _,
+                pixels,
+            } => utils::hash_chunk(&pixels),
+            _ => panic!("impossible image type"),
+        }),
+        Ok(7750142342572479438),
+        "decoded image hash test: {image:?}"
     );
 }
