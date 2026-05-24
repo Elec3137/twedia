@@ -47,11 +47,11 @@ fn test_decode_image() {
         "packet hash test"
     );
 
-    let image = block_on(preview.decode_image(0));
+    let image = block_on(preview.decode_image(0)).expect("image should be decodable from testfile");
     assert_eq!(
-        image.clone().map(|i| utils::hash_chunk(&i.rgba)),
-        Ok(7750142342572479438),
+        utils::hash_chunk(&image.rgba),
+        7750142342572479438,
         "decoded image hash test: {:?}",
-        image.map(|i| i.size)
+        image.size
     );
 }
