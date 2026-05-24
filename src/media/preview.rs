@@ -50,14 +50,15 @@ impl From<Output> for iced::widget::image::Handle {
 
 impl Preview {
     pub async fn decode_image(self, prev_hash: u64) -> Result<Output, Error> {
-        let mut ictx = ffmpeg::format::input(&self.input)?;
+        let mut context = ffmpeg::format::input(&self.input)?;
 
-        let input = ictx
+        let input_stream = context
             .streams()
             .best(ffmpeg_next::media::Type::Video)
             .ok_or(ffmpeg::Error::StreamNotFound)?;
 
-        let context_decoder = ffmpeg::codec::context::Context::from_parameters(input.parameters())?;
+        let context_decoder =
+            ffmpeg::codec::context::Context::from_parameters(input_stream.parameters())?;
 
         let mut decoder = context_decoder.decoder().video()?;
 
@@ -71,16 +72,16 @@ impl Preview {
             ffmpeg::software::scaling::Flags::BILINEAR,
         )?;
 
-        let target_stream = input.index();
+        let target_stream = input_stream.index();
         let mut decoded = ffmpeg::util::frame::video::Video::empty();
         let mut rgba_frame = ffmpeg::util::frame::video::Video::empty();
 
-        ictx.seek(
+        context.seek(
             (self.seek * f64::from(ffmpeg::ffi::AV_TIME_BASE)).round() as i64,
             i64::MIN..i64::MAX,
         )?;
 
-        for packet in ictx.packets().filter_map(|(stream, packet)| {
+        for packet in context.packets().filter_map(|(stream, packet)| {
             if stream.index() == target_stream {
                 Some(packet)
             } else {
@@ -89,6 +90,7 @@ impl Preview {
         }) {
             // skip empty packets
             if unsafe { packet.is_empty() } {
+                eprintln!("packet {:?} is empty, skipping", packet.pts());
                 continue;
             }
 
@@ -104,8 +106,8 @@ impl Preview {
             match decoder.receive_frame(&mut decoded) {
                 // skip the rest of the loop on benign "Resource temporarily unavailable" error
                 Err(ffmpeg::Error::Other { errno: 11 }) => continue,
-                Err(e) => return Err(e)?,
-                _ => {}
+                Err(e) => Err(e)?,
+                Ok(()) => {}
             }
 
             scalar.run(&decoded, &mut rgba_frame)?;

@@ -1,3 +1,5 @@
+use std::slice;
+
 use ffmpeg_next as ffmpeg;
 
 pub mod player;
@@ -171,5 +173,71 @@ impl Media {
         if self.end < self.start {
             self.end = self.start;
         }
+    }
+
+    pub fn create_audio_representation(&self) -> Result<Vec<u8>, ffmpeg::Error> {
+        let mut context = ffmpeg::format::input(&self.input)?;
+
+        context.seek(
+            (self.start * f64::from(ffmpeg::ffi::AV_TIME_BASE)).round() as i64,
+            i64::MIN..i64::MAX,
+        )?;
+
+        let input_stream = context
+            .streams()
+            .best(ffmpeg_next::media::Type::Audio)
+            .ok_or(ffmpeg::Error::StreamNotFound)?;
+        let target_stream = input_stream.index();
+
+        let context_decoder =
+            ffmpeg::codec::context::Context::from_parameters(input_stream.parameters())?;
+
+        let mut decoder = context_decoder.decoder().video()?;
+
+        let mut decoded = ffmpeg::util::frame::Audio::empty();
+
+        for packet in context.packets().filter_map(|(stream, packet)| {
+            if stream.index() == target_stream {
+                Some(packet)
+            } else {
+                None
+            }
+        }) {
+            // skip empty packets
+            if unsafe { packet.is_empty() } {
+                eprintln!("packet {:?} is empty, skipping", packet.pts());
+                continue;
+            }
+
+            if packet
+                .pts()
+                .expect("packet should contain a Presentation TimeStamp")
+                >= (self.end / f64::from(packet.time_base())).round() as i64
+            {
+                continue;
+            }
+
+            decoder.send_packet(&packet)?;
+
+            match decoder.receive_frame(&mut decoded) {
+                // skip the rest of the loop on benign "Resource temporarily unavailable" error
+                Err(ffmpeg::Error::Other { errno: 11 }) => continue,
+                Err(e) => Err(e)?,
+                Ok(()) => {}
+            }
+
+            // https://maxammann.org/posts/2015/06/fft-audio-visualisation/
+            // https://gist.github.com/maxammann/137176f1dcd0e4f596e8
+            let data: &[i16] = unsafe {
+                slice::from_raw_parts(
+                    decoded.data(0).as_ptr() as *const i16,
+                    decoded.data(0).len() / 2,
+                )
+            };
+        }
+
+        // let representation = Vec::new();
+        // Ok(representation)
+        todo!()
     }
 }
