@@ -49,8 +49,8 @@ enum Message {
 
     Update,
 
-    LoadedStartPreview(Result<(widget::image::Handle, u64, Size), preview::Error>),
-    LoadedEndPreview(Result<(widget::image::Handle, u64, Size), preview::Error>),
+    LoadedStartPreview(Result<preview::Output, preview::Error>),
+    LoadedEndPreview(Result<preview::Output, preview::Error>),
 
     AllocatedStartPreview(Result<widget::image::Allocation, widget::image::Error>),
     AllocatedEndPreview(Result<widget::image::Allocation, widget::image::Error>),
@@ -227,21 +227,21 @@ impl State {
             Message::ToggleSubs => self.media.use_subs.toggle(),
             Message::ToggleExtraStreams => self.media.use_extra_streams.toggle(),
 
-            Message::LoadedStartPreview(Ok((handle, hash, size))) => {
-                self.previews.last_start_hash = hash;
+            Message::LoadedStartPreview(Ok(image)) => {
+                self.previews.last_start_hash = image.hash;
 
-                self.previews.size = size;
+                self.previews.size = image.size.into();
                 self.check_if_vertical();
 
-                return widget::image::allocate(handle).map(Message::AllocatedStartPreview);
+                return widget::image::allocate(image).map(Message::AllocatedStartPreview);
             }
-            Message::LoadedEndPreview(Ok((handle, hash, size))) => {
-                self.previews.last_end_hash = hash;
+            Message::LoadedEndPreview(Ok(image)) => {
+                self.previews.last_end_hash = image.hash;
 
-                self.previews.size = size;
+                self.previews.size = image.size.into();
                 self.check_if_vertical();
 
-                return widget::image::allocate(handle).map(Message::AllocatedEndPreview);
+                return widget::image::allocate(image).map(Message::AllocatedEndPreview);
             }
             Message::LoadedStartPreview(Err(e)) | Message::LoadedEndPreview(Err(e)) => {
                 if e != preview::Error::SameHash {

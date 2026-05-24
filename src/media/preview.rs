@@ -1,7 +1,5 @@
 use std::fmt::{self, Display};
 
-use iced::{Size, widget};
-
 use ffmpeg_next as ffmpeg;
 
 use crate::utils;
@@ -35,11 +33,23 @@ impl From<ffmpeg::Error> for Error {
 }
 impl std::error::Error for Error {}
 
+/// (width, height),
+/// pixel data,
+/// hash of the source packet
+#[derive(Debug, PartialEq, Clone)]
+pub struct Output {
+    pub size: (u32, u32),
+    pub rgba: Vec<u8>,
+    pub hash: u64,
+}
+impl From<Output> for iced::widget::image::Handle {
+    fn from(value: Output) -> Self {
+        iced::widget::image::Handle::from_rgba(value.size.0, value.size.1, value.rgba)
+    }
+}
+
 impl Preview {
-    pub async fn decode_image(
-        self,
-        prev_hash: u64,
-    ) -> Result<(widget::image::Handle, u64, Size), Error> {
+    pub async fn decode_image(self, prev_hash: u64) -> Result<Output, Error> {
         let mut ictx = ffmpeg::format::input(&self.input)?;
 
         let input = ictx
@@ -100,17 +110,11 @@ impl Preview {
 
             scalar.run(&decoded, &mut rgba_frame)?;
 
-            let handle = widget::image::Handle::from_rgba(
-                rgba_frame.width(),
-                rgba_frame.height(),
-                rgba_frame.data(0).to_owned(),
-            );
-
-            return Ok((
-                handle,
-                new_hash,
-                Size::new(rgba_frame.width() as f32, rgba_frame.height() as f32),
-            ));
+            return Ok(Output {
+                size: (rgba_frame.width(), rgba_frame.height()),
+                rgba: rgba_frame.data(0).to_owned(),
+                hash: new_hash,
+            });
         }
 
         Err(Error::NoPackets)

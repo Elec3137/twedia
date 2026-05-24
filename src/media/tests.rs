@@ -47,18 +47,11 @@ fn test_decode_image() {
         "packet hash test"
     );
 
-    let image = block_on(preview.decode_image(0)).map(|(image, _, _)| image);
+    let image = block_on(preview.decode_image(0));
     assert_eq!(
-        image.clone().map(|i| match i {
-            iced::widget::image::Handle::Rgba {
-                id: _,
-                width: _,
-                height: _,
-                pixels,
-            } => utils::hash_chunk(&pixels),
-            _ => panic!("impossible image type"),
-        }),
+        image.clone().map(|i| utils::hash_chunk(&i.rgba)),
         Ok(7750142342572479438),
-        "decoded image hash test: {image:?}"
+        "decoded image hash test: {:?}",
+        image.map(|i| i.size)
     );
 }
