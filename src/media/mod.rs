@@ -33,15 +33,34 @@ impl Media {
 
         let mut stream_mapping = vec![0; ictx.nb_streams() as _];
         let mut ost_index = 0;
+        let (mut first_video, mut first_audio, mut first_subs) = (true, true, true);
         for (ist_index, ist) in ictx.streams().enumerate() {
             let ist_medium = ist.parameters().medium();
             if !{
                 use ffmpeg::media::Type;
-                match ist_medium {
-                    Type::Video => self.use_video,
-                    Type::Audio => self.use_audio,
-                    Type::Subtitle => self.use_subs,
-                    _ => self.use_extra_streams,
+                if self.use_extra_streams {
+                    match ist_medium {
+                        Type::Video => self.use_video,
+                        Type::Audio => self.use_audio,
+                        Type::Subtitle => self.use_subs,
+                        _ => true,
+                    }
+                } else {
+                    match ist_medium {
+                        Type::Video if self.use_video && first_video => {
+                            first_video = false;
+                            true
+                        }
+                        Type::Audio if self.use_audio && first_audio => {
+                            first_audio = false;
+                            true
+                        }
+                        Type::Subtitle if self.use_subs && first_subs => {
+                            first_subs = false;
+                            true
+                        }
+                        _ => false,
+                    }
                 }
             } {
                 stream_mapping[ist_index] = -1;
