@@ -7,6 +7,8 @@ use iced::{Size, widget};
 
 use ffmpeg_next as ffmpeg;
 
+use crate::utils;
+
 #[derive(Debug, Default, PartialEq, Clone)]
 pub struct Preview {
     pub seek: f64,
@@ -97,7 +99,7 @@ impl Preview {
             match decoder.receive_frame(&mut decoded) {
                 // skip the rest of the loop on benign "Resource temporarily unavailable" error
                 Err(ffmpeg::Error::Other { errno: 11 }) => continue,
-                Err(e) => return Err(Error::Raw(e)),
+                Err(e) => return Err(e)?,
                 _ => {}
             }
 
