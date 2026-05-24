@@ -64,12 +64,12 @@
 
         LD_LIBRARY_PATH = lib.makeLibraryPath runtimeLibs;
 
-        # Build *just* the cargo dependencies, so we can reuse
-        # all of that work (e.g. via cachix) when running in CI
+        # Build *just* the cargo dependencies,
+        # to reuse them for build and test derivations.
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
 
-        # Build the actual crate itself, reusing the dependency
-        # artifacts from above.
+        # Build the actual crate itself,
+        # reusing the dependency artifacts from above.
         crate =
           let
             desktopItem = pkgs.makeDesktopItem {
@@ -139,11 +139,6 @@
         };
 
         checks = {
-          # Run clippy on the crate source, resuing the dependency artifacts
-          # (e.g. from build scripts or proc-macros) from above.
-          #
-          # Note that this is done as a separate derivation so it
-          # does not impact building just the crate by itself.
           crate-clippy = craneLib.cargoClippy (
             commonArgs
             // {
