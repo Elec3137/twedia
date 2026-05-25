@@ -354,7 +354,7 @@ impl State {
                     self.status = "Finished".to_string();
                     return window::latest().and_then(window::close);
                 }
-                Err(e) => self.error = e.to_string(),
+                Err(e) => self.error = format!("failed to instantiate: {e} (check stderr)"),
             },
         }
 
