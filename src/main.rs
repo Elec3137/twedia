@@ -13,6 +13,8 @@ use iced::{
     task::{self},
     widget, window,
 };
+
+use iced_runtime::core;
 use rfd::{AsyncFileDialog, FileHandle};
 
 mod utils;
@@ -50,8 +52,8 @@ enum Message {
     LoadedStartPreview(Result<preview::Output, preview::Error>),
     LoadedEndPreview(Result<preview::Output, preview::Error>),
 
-    AllocatedStartPreview(Result<widget::image::Allocation, widget::image::Error>),
-    AllocatedEndPreview(Result<widget::image::Allocation, widget::image::Error>),
+    AllocatedStartPreview(Result<core::image::Allocation, core::image::Error>),
+    AllocatedEndPreview(Result<core::image::Allocation, core::image::Error>),
 
     PlayPreview,
 
@@ -71,8 +73,8 @@ struct PreviewState {
     last_start_hash: u64,
     last_end_hash: u64,
 
-    start: Option<widget::image::Allocation>,
-    end: Option<widget::image::Allocation>,
+    start: Option<core::image::Allocation>,
+    end: Option<core::image::Allocation>,
 
     start_task_handle: Option<task::Handle>,
     end_task_handle: Option<task::Handle>,
@@ -239,7 +241,7 @@ impl State {
                 self.previews.size = image.size.into();
                 self.check_if_vertical();
 
-                return widget::image::allocate(image).map(Message::AllocatedStartPreview);
+                return iced_runtime::image::allocate(image).map(Message::AllocatedStartPreview);
             }
             Message::LoadedEndPreview(Ok(image)) => {
                 self.previews.last_end_hash = image.hash;
@@ -247,7 +249,7 @@ impl State {
                 self.previews.size = image.size.into();
                 self.check_if_vertical();
 
-                return widget::image::allocate(image).map(Message::AllocatedEndPreview);
+                return iced_runtime::image::allocate(image).map(Message::AllocatedEndPreview);
             }
             Message::LoadedStartPreview(Err(e)) | Message::LoadedEndPreview(Err(e)) => {
                 if e != preview::Error::SameHash {
