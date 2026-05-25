@@ -13,12 +13,12 @@ use iced::{
     task::{self},
     widget, window,
 };
+use rfd::{AsyncFileDialog, FileHandle};
 
 mod utils;
 use crate::utils::*;
 
 mod paths;
-use paths::*;
 
 mod media;
 use media::*;
@@ -32,8 +32,8 @@ enum Message {
 
     PickInput,
     PickOutput,
-    InputPicked(Option<PathBuf>),
-    OutputPicked(Option<PathBuf>),
+    InputPicked(Option<FileHandle>),
+    OutputPicked(Option<FileHandle>),
 
     StartChange(String),
     EndChange(String),
@@ -194,28 +194,37 @@ impl State {
                 return self.check_inputs();
             }
 
-            Message::PickInput => return Task::perform(pick_file(), Message::InputPicked),
-            Message::PickOutput => return Task::perform(pick_folder(), Message::OutputPicked),
+            Message::PickInput => {
+                let dialog = AsyncFileDialog::new().set_directory(&self.media.input);
+                return Task::perform(dialog.pick_file(), Message::InputPicked);
+            }
+            Message::PickOutput => {
+                let dialog = AsyncFileDialog::new();
+                return Task::perform(dialog.pick_folder(), Message::OutputPicked);
+            }
             Message::InputPicked(opt) => {
-                if let Some(path) = opt
-                    && let Some(str) = path.to_str()
-                {
-                    return Task::done(Message::InputChange(str.to_owned()))
-                        .chain(Task::done(Message::Update));
+                if let Some(file) = opt {
+                    return Task::done(Message::InputChange(
+                        file.path().to_string_lossy().to_string(),
+                    ))
+                    .chain(Task::done(Message::Update));
                 }
             }
             Message::OutputPicked(opt) => {
-                if let Some(mut path) = opt {
-                    // push instead of setting filename
-                    // since picked folder is interpreted as the filename here
-                    path.push(
-                        Path::new(&self.media.output)
-                            .file_name()
-                            .unwrap_or_default(),
-                    );
-                    if let Some(str) = path.to_str() {
-                        return Task::done(Message::OutputChange(str.to_owned(), false));
-                    }
+                if let Some(file) = opt {
+                    return Task::done(Message::OutputChange(
+                        file.path()
+                            // join instead of setting filename
+                            // since picked folder is interpreted as the filename here
+                            .join(
+                                Path::new(&self.media.output)
+                                    .file_name()
+                                    .unwrap_or_default(),
+                            )
+                            .to_string_lossy()
+                            .to_string(),
+                        false,
+                    ));
                 }
             }
 
@@ -530,11 +539,8 @@ impl State {
     fn generate_output_path(&mut self) -> Task<Message> {
         let input_path = PathBuf::from(&self.media.input);
 
-        Task::perform(modify_path(input_path), |path| {
-            Message::OutputChange(
-                path.into_os_string().into_string().unwrap_or_default(),
-                true,
-            )
+        Task::perform(paths::edited(input_path), |path| {
+            Message::OutputChange(path.to_string_lossy().to_string(), true)
         })
     }
 
