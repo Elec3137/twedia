@@ -341,7 +341,7 @@ impl State {
                 self.check_if_vertical();
             }
 
-            // ignore all non-keyboard events
+            // ignore all other events
             Message::Event(_) => {}
 
             Message::Instantiate => {
