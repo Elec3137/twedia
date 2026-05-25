@@ -327,10 +327,8 @@ impl State {
                     return window::latest().and_then(window::close);
                 }
 
-                Key::Named(key::Named::Enter) => {
-                    if modifiers.shift() {
-                        return Task::done(Message::Instantiate);
-                    }
+                Key::Named(key::Named::Enter) if modifiers.shift() => {
+                    return Task::done(Message::Instantiate);
                 }
 
                 // ignore unbound keys
