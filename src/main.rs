@@ -45,8 +45,6 @@ enum Message {
     ToggleSubs,
     ToggleExtraStreams,
 
-    Submitted,
-
     Update,
 
     LoadedStartPreview(Result<preview::Output, preview::Error>),
@@ -228,7 +226,6 @@ impl State {
                 }
             }
 
-            Message::Submitted => return self.check_inputs(),
             Message::Update => return self.check_inputs(),
 
             Message::ToggleVideo => self.media.use_video.toggle(),
@@ -367,7 +364,7 @@ impl State {
     fn view(&self) -> Element<'_, Message> {
         let input_field = widget::text_input("input file", &self.media.input)
             .on_input(Message::InputChange)
-            .on_submit(Message::Submitted);
+            .on_submit(Message::Update);
         let input_picker = widget::button("pick file")
             .on_press(Message::PickInput)
             .style(if self.input_exists {
@@ -385,7 +382,7 @@ impl State {
         let start_field = widget::text_input("start", &self.start)
             .on_input(Message::StartChange)
             .width(200)
-            .on_submit(Message::Submitted);
+            .on_submit(Message::Update);
 
         let end_slider = widget::slider(
             self.media.start + 1.0..=self.input_length,
@@ -396,11 +393,11 @@ impl State {
         let end_field = widget::text_input("end", &self.end)
             .on_input(Message::EndChange)
             .width(200)
-            .on_submit(Message::Submitted);
+            .on_submit(Message::Update);
 
         let output_field = widget::text_input("output file", &self.media.output)
             .on_input(|str| Message::OutputChange(str, false))
-            .on_submit(Message::Submitted);
+            .on_submit(Message::Update);
         let output_picker = widget::button("pick folder")
             .on_press(Message::PickOutput)
             .style(if self.output_file_exists {
