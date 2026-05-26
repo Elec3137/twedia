@@ -51,13 +51,11 @@ cargo run # or `nix run`
     2. storing the PID instead of working with the `Child` object
     3. mutable statics
 
-1. obsolete the CLI for creating and writing the final output
+1. consider looking into macOS support
 
-2. test nix builds with other linux distributions
+2. consider looking into windows support
 
-3. consider looking into macOS support
-
-4. consider looking into windows support
+3. audio visualization (learn to work with ffmpeg audio data)
 
 ## style
 
