@@ -18,9 +18,7 @@ use iced_runtime::core;
 use rfd::{AsyncFileDialog, FileHandle};
 
 mod utils;
-use crate::utils::*;
-
-mod paths;
+use utils::{BoolToggleExt, SizeRatioExt};
 
 mod media;
 use media::*;
@@ -536,7 +534,7 @@ impl State {
     fn generate_output_path(&mut self) -> Task<Message> {
         let input_path = PathBuf::from(&self.media.input);
 
-        Task::perform(paths::edited(input_path), |path| {
+        Task::perform(utils::edited(input_path), |path| {
             Message::OutputChange(path.to_string_lossy().to_string(), true)
         })
     }
