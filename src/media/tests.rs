@@ -27,7 +27,9 @@ fn test_create() {
     block_on(media.clone().create()).unwrap();
 
     // since the hash is mismatched each time, but the size isn't, why not
-    let new_size = fs::metadata(&media.output).unwrap().len();
+    let new_size = fs::metadata(&media.output)
+        .expect("output should be created")
+        .len();
     assert_eq!(new_size, 3480882, "size test");
 
     let context = ffmpeg::format::input(&media.output).unwrap();
