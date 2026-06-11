@@ -75,19 +75,7 @@
             desktopItem = pkgs.makeDesktopItem {
               inherit name;
               desktopName = name;
-              mimeTypes = [
-                "video/matroshka"
-                "video/webm"
-                "video/mp4"
-
-                "audio/matroshka"
-                "audio/webm"
-                "audio/mp4"
-
-                "audio/aac"
-                "audio/flac"
-                "audio/ogg"
-              ];
+              mimeTypes = cargoToml.package.metadata.bundle.linux_mime_types;
               icon = "image-x-generic";
               exec = name;
             };
@@ -123,7 +111,7 @@
 
         packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
           developer = "electria";
-          appId = "io.github.Elec3137.${name}";
+          appId = cargoToml.package.metadata.bundle.identifier;
           package = crate;
           runtime = "org.gnome.Platform/49";
           permissions = {
