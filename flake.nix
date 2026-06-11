@@ -45,10 +45,6 @@
           libxkbcommon
 
           wayland
-
-          libx11
-          libxcursor
-          libxi
         ];
 
         commonArgs = {
@@ -132,7 +128,6 @@
             ];
             sockets = [
               "pulseaudio"
-              "fallback-x11"
               "wayland"
             ];
           };
