@@ -123,7 +123,7 @@
 
         packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
           developer = "electria";
-          appId = "moe.pancake.${name}";
+          appId = "io.github.Elec3137.${name}";
           package = crate;
           runtime = "org.gnome.Platform/49";
           permissions = {
