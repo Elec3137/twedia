@@ -37,10 +37,7 @@
         runtimeExes = with pkgs; [
           mpv
         ];
-        runtimeLibs = with pkgs; [
-          # doesn't look like it's needed for some reason
-          ffmpeg
-
+        dlDeps = with pkgs; [
           # needed for both x11 and wayland
           libxkbcommon
 
@@ -49,6 +46,10 @@
           libx11
           libxcursor
           libxi
+        ];
+        runtimeLibs = dlDeps ++ [
+          # doesn't look like it's needed for some reason
+          pkgs.ffmpeg
         ];
 
         commonArgs = {
@@ -85,13 +86,12 @@
             // {
               inherit cargoArtifacts;
 
-              nativeBuildInputs =
-                with pkgs;
-                commonArgs.nativeBuildInputs
-                ++ [
-                  makeBinaryWrapper
-                ];
-              buildInputs = commonArgs.buildInputs;
+              nativeBuildInputs = commonArgs.nativeBuildInputs ++ [
+                pkgs.makeBinaryWrapper
+                pkgs.autoPatchelfHook
+              ];
+
+              runtimeDependencies = dlDeps;
 
               doCheck = false;
 
@@ -101,7 +101,6 @@
 
                 wrapProgram $out/bin/${name} \
                   --prefix PATH : "${lib.makeBinPath runtimeExes}" \
-                  --prefix LD_LIBRARY_PATH : "${LD_LIBRARY_PATH}"
               '';
             }
           );
