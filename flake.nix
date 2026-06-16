@@ -25,15 +25,6 @@
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
         name = cargoToml.package.name;
 
-        compiletimeTools = with pkgs; [
-          # for ffmpeg-sys-next
-          rustPlatform.bindgenHook
-          pkg-config
-        ];
-        compiletimeLibs = with pkgs; [
-          ffmpeg
-        ];
-
         runtimeExes = with pkgs; [
           mpv
         ];
@@ -47,15 +38,17 @@
           libxcursor
           libxi
         ];
-        runtimeLibs = dlDeps ++ [
-          # doesn't look like it's needed for some reason
-          pkgs.ffmpeg
-        ];
 
         commonArgs = {
           # all that's needed for artifacts and checks
-          nativeBuildInputs = compiletimeTools;
-          buildInputs = compiletimeLibs;
+          nativeBuildInputs = with pkgs; [
+            # for ffmpeg-sys-next
+            rustPlatform.bindgenHook
+            pkg-config
+          ];
+          buildInputs = with pkgs; [
+            ffmpeg
+          ];
 
           src = craneLib.cleanCargoSource ./.;
 
@@ -63,7 +56,7 @@
           NIX_OUTPATH_USED_AS_RANDOM_SEED = "aaaaaaaaaa";
         };
 
-        LD_LIBRARY_PATH = lib.makeLibraryPath runtimeLibs;
+        LD_LIBRARY_PATH = lib.makeLibraryPath dlDeps;
 
         # Build *just* the cargo dependencies,
         # to reuse them for build and test derivations.
@@ -148,7 +141,7 @@
           inherit LD_LIBRARY_PATH;
 
           inputsFrom = [ crate ];
-          packages = [ pkgs.rust-analyzer ];
+          packages = [ pkgs.rust-analyzer ] ++ runtimeExes;
         };
       }
     );
