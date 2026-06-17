@@ -40,7 +40,7 @@ cargo run # or `nix run`
 
 ## main goals
 
-0. add feedback for when a preview is playing (eg red buttons)
+1. add feedback for when a preview is playing (eg red buttons)
 
     after trying to implement this, I realized this requires two different processes to call mutable methods on the `Child`:
     1. the process that waits for the `Child` to exit
@@ -51,17 +51,23 @@ cargo run # or `nix run`
     2. storing the PID instead of working with the `Child` object
     3. mutable statics
 
-1. consider looking into macOS support
+2. consider looking into macOS support
 
-2. consider looking into windows support
+3. consider looking into windows support
 
-3. audio visualization (learn to work with ffmpeg audio data)
+4. audio visualization (learn to work with ffmpeg audio data)
 
 ## style
 
-1. use pipewire in flatpak [issue](https://github.com/flatpak/flatpak/issues/5130)
+1. consider using enum `Extreme` for differentiating `End` and `Start` for previews, to reduce code repetition
 
-2. consider using enum `Extreme` for differentiating `End` and `Start` for previews, to reduce code repetition
+## flatpak
+
+1. fix mpv (broken since removal of wrapper)
+
+2. fix launching twedia with a file
+
+3. use pipewire ([issue](https://github.com/flatpak/flatpak/issues/5130))
 
 ## cosmic
 
