@@ -80,6 +80,7 @@
               inherit cargoArtifacts;
 
               nativeBuildInputs = commonArgs.nativeBuildInputs ++ [
+                pkgs.makeBinaryWrapper
                 pkgs.autoPatchelfHook
               ];
 
@@ -87,14 +88,12 @@
 
               doCheck = false;
 
-              postPatch = ''
-                substituteInPlace src/media/player.rs \
-                  --replace-fail "\"mpv\"" "\"${lib.getExe pkgs.mpv}\""
-              '';
-
               postFixup = ''
                 mkdir -p "$out/share/applications"
                 ln -s "${desktopItem}"/share/applications/* "$out/share/applications/"
+
+                wrapProgram $out/bin/${name} \
+                  --prefix PATH : "${lib.makeBinPath runtimeExes}" \
               '';
             }
           );
