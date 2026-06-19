@@ -459,10 +459,12 @@ impl State {
         return widget::column![
             widget::row![input_field, input_picker],
 
-            widget::row![widget::text("Start time (seconds):  "), start_field, start_slider]
+            widget::row![widget::text("Start time (seconds):"), start_field, start_slider]
+                .spacing(10)
                 .align_y(Vertical::Center),
 
-            widget::row![widget::text("End time (seconds):    "), end_field, end_slider]
+            widget::row![widget::text("End time (seconds):  "), end_field, end_slider]
+                .spacing(10)
                 .align_y(Vertical::Center),
 
             widget::row![video_checkbox, audio_checkbox, subs_checkbox, extra_streams_checkbox]
