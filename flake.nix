@@ -31,6 +31,8 @@
         dlDeps = with pkgs; [
           # needed for both x11 and wayland
           libxkbcommon
+          libGL
+          vulkan-loader
 
           wayland
 
