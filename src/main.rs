@@ -11,7 +11,7 @@ use iced::{
     color, event,
     keyboard::{self, Key, key},
     task::{self},
-    widget, window,
+    theme, widget, window,
 };
 
 use iced_runtime::core;
@@ -623,7 +623,7 @@ fn main() -> Result<(), iced::Error> {
         .subscription(State::subscription)
         .theme(Theme::custom(
             "custom",
-            iced::theme::Palette {
+            theme::Palette {
                 background: color!(0x080808),
                 text: Color::WHITE,
                 primary: color!(0xff00ff),
