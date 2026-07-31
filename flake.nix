@@ -30,7 +30,7 @@
         ];
         dlDeps = with pkgs; [
           # libdbus, for rfd
-          dbus
+          dbus.lib
 
           # needed for both x11 and wayland
           libxkbcommon
