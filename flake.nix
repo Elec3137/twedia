@@ -62,8 +62,6 @@
           NIX_OUTPATH_USED_AS_RANDOM_SEED = "aaaaaaaaaa";
         };
 
-        LD_LIBRARY_PATH = lib.makeLibraryPath dlDeps;
-
         # Build *just* the cargo dependencies,
         # to reuse them for build and test derivations.
         cargoArtifacts = craneLib.buildDepsOnly commonArgs;
@@ -144,7 +142,7 @@
         };
 
         devShells.default = craneLib.devShell {
-          inherit LD_LIBRARY_PATH;
+          LD_LIBRARY_PATH = lib.makeLibraryPath dlDeps;
 
           inputsFrom = [ crate ];
           packages = [ pkgs.rust-analyzer ] ++ runtimeExes;
