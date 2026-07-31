@@ -29,6 +29,9 @@
           mpv
         ];
         dlDeps = with pkgs; [
+          # libdbus, for rfd
+          dbus
+
           # needed for both x11 and wayland
           libxkbcommon
           libGL
@@ -39,6 +42,7 @@
           libx11
           libxcursor
           libxi
+          libxcb
         ];
 
         commonArgs = {
