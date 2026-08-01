@@ -28,22 +28,25 @@
         runtimeExes = with pkgs; [
           mpv
         ];
-        dlDeps = with pkgs; [
-          # libdbus, for rfd
-          dbus.lib
+        dlDeps =
+          with pkgs;
+          [
+            # needed for both x11 and wayland
+            libxkbcommon
+            libGL
 
-          # needed for both x11 and wayland
-          libxkbcommon
-          libGL
-          vulkan-loader
+            libx11
+            libxcursor
+            libxi
+            libxcb
+          ]
+          ++ lib.optionals stdenv.hostPlatform.isLinux [
+            # libdbus, for rfd
+            dbus.lib
 
-          wayland
-
-          libx11
-          libxcursor
-          libxi
-          libxcb
-        ];
+            vulkan-loader
+            wayland
+          ];
 
         commonArgs = {
           # all that's needed for artifacts and checks
