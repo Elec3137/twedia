@@ -1,4 +1,9 @@
 use iced::Size;
+use std::{
+    ffi::OsStr,
+    hash::{DefaultHasher, Hash, Hasher},
+    path::PathBuf,
+};
 
 pub trait BoolToggleExt {
     fn toggle(&mut self);
@@ -23,7 +28,6 @@ where
     }
 }
 
-use std::hash::{DefaultHasher, Hash, Hasher};
 /// takes the hash of a single slice and returns it
 ///
 /// convinience function to avoid manually creating a Hasher,
@@ -35,21 +39,26 @@ pub fn hash_chunk<T: Hash>(t: &[T]) -> u64 {
     s.finish()
 }
 
-use std::{ffi::OsStr, path::PathBuf};
-/// returns the path with a filename that has `_edited` appended,
-/// while still preserving the original extension.
-pub async fn edited(mut path: PathBuf) -> PathBuf {
-    let file_stem = path
-        .file_stem()
-        .unwrap_or_else(|| OsStr::new("media"))
-        .to_string_lossy();
+pub trait PathBufExt {
+    /// returns the path with a filename that has `_edited` appended,
+    /// while still preserving the original extension.
+    fn edited(self) -> PathBuf;
+}
 
-    let extension = path
-        .extension()
-        .unwrap_or_else(|| OsStr::new("mkv"))
-        .to_string_lossy();
+impl PathBufExt for PathBuf {
+    fn edited(mut self) -> PathBuf {
+        let file_stem = self
+            .file_stem()
+            .unwrap_or_else(|| OsStr::new("media"))
+            .to_string_lossy();
 
-    path.set_file_name(format!("{file_stem}_edited.{extension}"));
+        let extension = self
+            .extension()
+            .unwrap_or_else(|| OsStr::new("mkv"))
+            .to_string_lossy();
 
-    path
+        self.set_file_name(format!("{file_stem}_edited.{extension}"));
+
+        self
+    }
 }
