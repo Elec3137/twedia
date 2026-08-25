@@ -130,16 +130,17 @@ impl Media {
         // try to load the media
         let context = ffmpeg::format::input(&self.input)?;
 
-        let mut streams = context.streams();
+        self.use_video = context
+            .streams()
+            .any(|stream| stream.parameters().medium() == ffmpeg::media::Type::Video);
 
-        self.use_video =
-            streams.any(|stream| stream.parameters().medium() == ffmpeg::media::Type::Video);
+        self.use_audio = context
+            .streams()
+            .any(|stream| stream.parameters().medium() == ffmpeg::media::Type::Audio);
 
-        self.use_audio =
-            streams.any(|stream| stream.parameters().medium() == ffmpeg::media::Type::Audio);
-
-        self.use_subs =
-            streams.any(|stream| stream.parameters().medium() == ffmpeg::media::Type::Subtitle);
+        self.use_subs = context
+            .streams()
+            .any(|stream| stream.parameters().medium() == ffmpeg::media::Type::Subtitle);
 
         self.use_extra_streams = context.nb_streams()
             > self.use_video as u32 + self.use_audio as u32 + self.use_subs as u32;
