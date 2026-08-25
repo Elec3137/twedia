@@ -131,7 +131,7 @@
               cargoClippyExtraArgs = "-- --deny warnings && cargo test --release";
 
               env = env // {
-                TESTFILE0 = pkgs.fetchurl {
+                TESTFILE = pkgs.fetchurl {
                   url = "https://github.com/Elec3137/test-files/raw/refs/heads/main/chud.webm";
                   hash = "sha256-Z0p6mbJxWloCXzSongUs27XzLPCu9lPSbSSAYbwCHWg=";
                 };

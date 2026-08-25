@@ -5,18 +5,14 @@ use super::*;
 use smol::block_on;
 use std::{env, fs};
 
-macro_rules! TESTFILE {
-    ($v:literal) => {
-        env::var(format!("TESTFILE{}", $v)).expect("test file should be avaliable")
-    };
-}
+const TESTFILE: &str = env!("TESTFILE");
 
 #[test]
 fn test_create() {
     let media = Media {
         start: 60.0,
         end: 120.0,
-        input: TESTFILE!(0),
+        input: TESTFILE.into(),
         output: String::from("test.mkv"),
         use_video: true,
         use_audio: true,
@@ -40,7 +36,7 @@ fn test_create() {
 fn test_decode_image() {
     let preview = preview::Preview {
         seek: 60.0,
-        input: TESTFILE!(0),
+        input: TESTFILE.into(),
     };
 
     assert_eq!(
