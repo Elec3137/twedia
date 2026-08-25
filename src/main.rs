@@ -39,6 +39,8 @@ enum Message {
     EndChange(String),
     EagerStartChange(f64),
     EagerEndChange(f64),
+    StartChangeBy(f64),
+    EndChangeBy(f64),
 
     ToggleVideo,
     ToggleAudio,
@@ -55,7 +57,10 @@ enum Message {
 
     PlayPreview,
 
-    Event(Event),
+    WindowResized(Size),
+    FocusNext,
+    FocusPrevious,
+    Quit,
 
     Instantiate,
     InstantiateFinished(Result<(), ffmpeg::Error>),
@@ -192,6 +197,13 @@ impl State {
                 return self.check_inputs();
             }
 
+            Message::StartChangeBy(val) => {
+                return Task::done(Message::EagerStartChange(self.media.start + val));
+            }
+            Message::EndChangeBy(val) => {
+                return Task::done(Message::EagerEndChange(self.media.end + val));
+            }
+
             Message::PickInput => {
                 let dialog = AsyncFileDialog::new().set_directory(&self.media.input);
                 return Task::perform(dialog.pick_file(), Message::InputPicked);
@@ -267,80 +279,10 @@ impl State {
                 self.previews.player.toggle_preview_of(&self.media);
             }
 
-            Message::Event(Event::Keyboard(keyboard::Event::KeyPressed {
-                key, modifiers, ..
-            })) => match key.as_ref() {
-                // input field cycling
-                Key::Named(key::Named::Tab) => {
-                    if modifiers.shift() {
-                        return widget::operation::focus_previous();
-                    } else {
-                        return widget::operation::focus_next();
-                    }
-                }
-
-                Key::Named(key::Named::ArrowRight) | Key::Character("l") => {
-                    return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.media.end + 5.0))
-                    } else {
-                        Task::done(Message::EagerStartChange(self.media.start + 5.0))
-                    };
-                }
-                Key::Named(key::Named::ArrowLeft) | Key::Character("h") => {
-                    return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.media.end - 5.0))
-                    } else {
-                        Task::done(Message::EagerStartChange(self.media.start - 5.0))
-                    };
-                }
-
-                Key::Named(key::Named::ArrowUp) | Key::Character("k") => {
-                    return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.media.end + 10.0))
-                    } else {
-                        Task::done(Message::EagerStartChange(self.media.start + 10.0))
-                    };
-                }
-                Key::Named(key::Named::ArrowDown) | Key::Character("j") => {
-                    return if modifiers.shift() {
-                        Task::done(Message::EagerEndChange(self.media.end - 10.0))
-                    } else {
-                        Task::done(Message::EagerStartChange(self.media.start - 10.0))
-                    };
-                }
-
-                Key::Character("v") => return Task::done(Message::ToggleVideo),
-                Key::Character("a") => return Task::done(Message::ToggleAudio),
-                Key::Character("s") => return Task::done(Message::ToggleSubs),
-                Key::Character("e") => return Task::done(Message::ToggleExtraStreams),
-
-                Key::Character("i") | Key::Character("f") => {
-                    return Task::done(Message::PickInput);
-                }
-                Key::Character("o") | Key::Character("d") => {
-                    return Task::done(Message::PickOutput);
-                }
-
-                Key::Character("p") => return Task::done(Message::PlayPreview),
-
-                Key::Character("q") => {
-                    return window::latest().and_then(window::close);
-                }
-
-                Key::Named(key::Named::Enter) if modifiers.shift() => {
-                    return Task::done(Message::Instantiate);
-                }
-
-                // ignore unbound keys
-                _ => {}
-            },
-            Message::Event(Event::Window(window::Event::Resized(new_size))) => {
+            Message::WindowResized(new_size) => {
                 self.size = new_size;
                 self.check_if_vertical();
             }
-
-            // ignore all other events
-            Message::Event(_) => {}
 
             Message::Instantiate => {
                 self.error.clear();
@@ -354,6 +296,10 @@ impl State {
                 }
                 Err(e) => self.error = format!("failed to instantiate: {e} (check stderr)"),
             },
+
+            Message::FocusNext => return widget::operation::focus_next(),
+            Message::FocusPrevious => return widget::operation::focus_previous(),
+            Message::Quit => return window::latest().and_then(window::close),
         }
 
         Task::none()
@@ -491,7 +437,72 @@ impl State {
     }
 
     fn subscription(&self) -> Subscription<Message> {
-        event::listen().map(Message::Event)
+        event::listen().filter_map(|event| match event {
+            Event::Window(window::Event::Resized(new_size)) => {
+                Some(Message::WindowResized(new_size))
+            }
+
+            Event::Keyboard(keyboard::Event::KeyPressed { key, modifiers, .. }) => {
+                match key.as_ref() {
+                    // input field cycling
+                    Key::Named(key::Named::Tab) => Some(if modifiers.shift() {
+                        Message::FocusPrevious
+                    } else {
+                        Message::FocusNext
+                    }),
+
+                    Key::Named(key::Named::ArrowRight) | Key::Character("l") => {
+                        Some(if modifiers.shift() {
+                            Message::EndChangeBy(5.0)
+                        } else {
+                            Message::StartChangeBy(5.0)
+                        })
+                    }
+                    Key::Named(key::Named::ArrowLeft) | Key::Character("h") => {
+                        Some(if modifiers.shift() {
+                            Message::EndChangeBy(-5.0)
+                        } else {
+                            Message::StartChangeBy(-5.0)
+                        })
+                    }
+
+                    Key::Named(key::Named::ArrowUp) | Key::Character("k") => {
+                        Some(if modifiers.shift() {
+                            Message::EndChangeBy(10.0)
+                        } else {
+                            Message::StartChangeBy(10.0)
+                        })
+                    }
+                    Key::Named(key::Named::ArrowDown) | Key::Character("j") => {
+                        Some(if modifiers.shift() {
+                            Message::EndChangeBy(-10.0)
+                        } else {
+                            Message::StartChangeBy(-10.0)
+                        })
+                    }
+
+                    Key::Character("v") => Some(Message::ToggleVideo),
+                    Key::Character("a") => Some(Message::ToggleAudio),
+                    Key::Character("s") => Some(Message::ToggleSubs),
+                    Key::Character("e") => Some(Message::ToggleExtraStreams),
+
+                    Key::Character("i") | Key::Character("f") => Some(Message::PickInput),
+                    Key::Character("o") | Key::Character("d") => Some(Message::PickOutput),
+
+                    Key::Character("p") => Some(Message::PlayPreview),
+
+                    Key::Character("q") => Some(Message::Quit),
+
+                    Key::Named(key::Named::Enter) if modifiers.shift() => {
+                        Some(Message::Instantiate)
+                    }
+
+                    // ignore unbound keys
+                    _ => None,
+                }
+            }
+            _ => None,
+        })
     }
 
     fn check_inputs(&mut self) -> Task<Message> {
