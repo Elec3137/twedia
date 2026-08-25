@@ -108,7 +108,7 @@ struct State {
     output_file_exists: bool,
 
     error: String,
-    status: String,
+    status: &'static str,
 }
 
 impl State {
@@ -286,11 +286,11 @@ impl State {
 
             Message::Instantiate => {
                 self.error.clear();
-                self.status = "Loading...".to_string();
+                self.status = "Loading...";
                 return self.instantiate();
             }
             Message::InstantiateFinished(result) => match result {
-                Ok(()) => self.status = "Finished".to_string(),
+                Ok(()) => self.status = "Finished",
                 Err(e) => self.error = format!("failed to instantiate: {e} (check stderr)"),
             },
 
@@ -385,7 +385,7 @@ impl State {
         let status_display = if !self.error.is_empty() {
             widget::row![widget::text(&self.error).style(widget::text::danger)]
         } else if !self.status.is_empty() {
-            widget::row![widget::text(&self.status).style(widget::text::primary)]
+            widget::row![widget::text(self.status).style(widget::text::primary)]
         } else {
             widget::row![]
         };
