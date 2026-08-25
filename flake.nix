@@ -72,7 +72,22 @@
 
         # Build the actual crate itself,
         # reusing the dependency artifacts from above.
-        crate =
+        crate = craneLib.buildPackage (
+          commonArgs
+          // {
+            inherit cargoArtifacts env;
+
+            nativeBuildInputs = commonArgs.nativeBuildInputs ++ [
+              pkgs.autoPatchelfHook
+            ];
+
+            runtimeDependencies = dlDeps;
+
+            doCheck = false;
+          }
+        );
+
+        package =
           let
             desktopItem = pkgs.makeDesktopItem {
               inherit name;
@@ -82,32 +97,22 @@
               exec = name;
             };
           in
-          craneLib.buildPackage (
-            commonArgs
-            // {
-              inherit cargoArtifacts env;
-
-              nativeBuildInputs = commonArgs.nativeBuildInputs ++ [
-                pkgs.autoPatchelfHook
-              ];
-
-              runtimeDependencies = dlDeps;
-
-              doCheck = false;
-
-              postFixup = ''
-                cp -rs "${desktopItem}"/* "$out"
-              '';
-            }
-          );
+          pkgs.symlinkJoin {
+            name = name + "-symlinked";
+            paths = [
+              crate
+              desktopItem
+            ];
+          };
       in
       {
-        packages.default = crate;
+        packages.default = package;
 
         packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
+          inherit package;
+
           developer = "electria";
           appId = cargoToml.package.metadata.bundle.identifier;
-          package = crate;
           runtime = "org.gnome.Platform/49";
           permissions = {
             devices = [
