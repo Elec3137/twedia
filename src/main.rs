@@ -290,10 +290,7 @@ impl State {
                 return self.instantiate();
             }
             Message::InstantiateFinished(result) => match result {
-                Ok(()) => {
-                    self.status = "Finished".to_string();
-                    return window::latest().and_then(window::close);
-                }
+                Ok(()) => self.status = "Finished".to_string(),
                 Err(e) => self.error = format!("failed to instantiate: {e} (check stderr)"),
             },
 
