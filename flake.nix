@@ -105,9 +105,14 @@
         packages.default = crate;
 
         packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
+          package = crate.overrideAttrs (previousAttrs: {
+            env = previousAttrs.env // {
+              MPV_EXE = "/app/" + previousAttrs.env.MPV_EXE;
+            };
+          });
+
           developer = "electria";
           appId = cargoToml.package.metadata.bundle.identifier;
-          package = crate;
           runtime = "org.gnome.Platform/49";
           permissions = {
             devices = [
