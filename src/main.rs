@@ -498,6 +498,8 @@ impl State {
                     _ => None,
                 }
             }
+
+            // ignore unused events
             _ => None,
         })
     }
