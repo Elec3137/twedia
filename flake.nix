@@ -25,9 +25,6 @@
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
         name = cargoToml.package.name;
 
-        runtimeExes = with pkgs; [
-          mpv
-        ];
         dlDeps =
           with pkgs;
           [
@@ -47,6 +44,10 @@
             vulkan-loader
             wayland
           ];
+
+        env = {
+          MPV_EXE = lib.getExe pkgs.mpv;
+        };
 
         commonArgs = {
           # all that's needed for artifacts and checks
@@ -84,7 +85,7 @@
           craneLib.buildPackage (
             commonArgs
             // {
-              inherit cargoArtifacts;
+              inherit cargoArtifacts env;
 
               nativeBuildInputs = commonArgs.nativeBuildInputs ++ [
                 pkgs.autoPatchelfHook
@@ -93,11 +94,6 @@
               runtimeDependencies = dlDeps;
 
               doCheck = false;
-
-              postPatch = ''
-                substituteInPlace src/media/player.rs \
-                  --replace-fail "\"mpv\"" "\"${lib.getExe pkgs.mpv}\""
-              '';
 
               postFixup = ''
                 mkdir -p "$out/share/applications"
@@ -134,7 +130,7 @@
 
               cargoClippyExtraArgs = "-- --deny warnings && cargo test --release";
 
-              env = {
+              env = env // {
                 TESTFILE0 = pkgs.fetchurl {
                   url = "https://github.com/Elec3137/test-files/raw/refs/heads/main/chud.webm";
                   hash = "sha256-Z0p6mbJxWloCXzSongUs27XzLPCu9lPSbSSAYbwCHWg=";
@@ -145,10 +141,11 @@
         };
 
         devShells.default = craneLib.devShell {
+          inherit env;
           LD_LIBRARY_PATH = lib.makeLibraryPath dlDeps;
 
           inputsFrom = [ crate ];
-          packages = [ pkgs.rust-analyzer ] ++ runtimeExes;
+          packages = [ pkgs.rust-analyzer ];
         };
       }
     );

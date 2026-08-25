@@ -2,6 +2,8 @@ use smol::{io, process};
 
 use super::Media;
 
+const MPV_EXE: &str = env!("MPV_EXE");
+
 /// A handle over mpv
 #[derive(Debug, Default)]
 pub struct Player(Option<process::Child>);
@@ -40,7 +42,7 @@ impl Player {
             args.push("--sub=no");
         }
 
-        self.0 = Some(process::Command::new("mpv").args(args).spawn()?);
+        self.0 = Some(process::Command::new(MPV_EXE).args(args).spawn()?);
 
         Ok(())
     }
