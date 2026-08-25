@@ -459,16 +459,16 @@ impl State {
 
                     Key::Named(key::Named::ArrowRight) | Key::Character("l") => {
                         Some(if modifiers.shift() {
-                            Message::EndChangeBy(5.0)
+                            Message::EndChangeBy(1.0)
                         } else {
-                            Message::StartChangeBy(5.0)
+                            Message::StartChangeBy(1.0)
                         })
                     }
                     Key::Named(key::Named::ArrowLeft) | Key::Character("h") => {
                         Some(if modifiers.shift() {
-                            Message::EndChangeBy(-5.0)
+                            Message::EndChangeBy(-1.0)
                         } else {
-                            Message::StartChangeBy(-5.0)
+                            Message::StartChangeBy(-1.0)
                         })
                     }
 
