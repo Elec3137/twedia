@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+    nixpkgs.url = "https://channels.nixos.org/nixos-unstable/nixexprs.tar.zst";
 
     crane.url = "github:ipetkov/crane";
 
@@ -57,7 +57,7 @@
             pkg-config
           ];
           buildInputs = with pkgs; [
-            ffmpeg
+            ffmpeg_8
           ];
 
           src = craneLib.cleanCargoSource ./.;
