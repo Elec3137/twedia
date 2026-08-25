@@ -402,13 +402,22 @@ impl State {
         return widget::column![
             widget::row![input_field, input_picker],
 
-            widget::row![widget::text("Start time (seconds):"), start_field, start_slider]
-                .spacing(10)
-                .align_y(Vertical::Center),
-
-            widget::row![widget::text("End time (seconds):  "), end_field, end_slider]
-                .spacing(10)
-                .align_y(Vertical::Center),
+            widget::row![
+                widget::column![
+                    widget::text("Start time (seconds):").height(Length::Fill).align_y(Vertical::Center),
+                    widget::text("End time (seconds):").height(Length::Fill).align_y(Vertical::Center),
+                ].spacing(20),
+                widget::column![
+                    start_field,
+                    end_field,
+                ].spacing(20),
+                widget::column![
+                    widget::container(start_slider).height(Length::Fill).align_y(Vertical::Center),
+                    widget::container(end_slider).height(Length::Fill).align_y(Vertical::Center),
+                ].spacing(20),
+                ]
+                .height(Length::Shrink)
+                .spacing(10),
 
             widget::row![video_checkbox, audio_checkbox, subs_checkbox, extra_streams_checkbox]
                 .spacing(100)
