@@ -57,7 +57,7 @@
             pkg-config
           ];
           buildInputs = with pkgs; [
-            ffmpeg_8
+            ffmpeg
           ];
 
           src = craneLib.cleanCargoSource ./.;

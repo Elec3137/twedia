@@ -21,7 +21,7 @@ linux_mime_types = [
 ]
 
 [dependencies]
-ffmpeg-next = "8.0.0"
+ffmpeg-next = "9.0.0"
 iced = { version = "0.14.0", features = ["image-without-codecs", "smol"] }
 iced_runtime = "0.14.0"
 rfd = "0.17.2"
