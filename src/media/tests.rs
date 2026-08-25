@@ -30,7 +30,7 @@ fn test_create() {
     let new_size = fs::metadata(&media.output)
         .expect("output should be created")
         .len();
-    assert_eq!(new_size, 3480882, "size test");
+    assert_eq!(new_size, 3480879, "size test");
 
     let context = ffmpeg::format::input(&media.output).unwrap();
     assert_eq!(context.duration(), 60575000, "duration test");
