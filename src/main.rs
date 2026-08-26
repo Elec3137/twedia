@@ -10,8 +10,7 @@ use iced::{
     alignment::{Horizontal, Vertical},
     color, event,
     keyboard::{self, Key, key},
-    task::{self},
-    theme, widget, window,
+    task, theme, widget, window,
 };
 
 use iced_runtime::core;
