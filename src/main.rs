@@ -212,30 +212,29 @@ impl State {
                 let dialog = AsyncFileDialog::new();
                 return Task::perform(dialog.pick_folder(), Message::OutputPicked);
             }
-            Message::InputPicked(opt) => {
-                if let Some(file) = opt {
-                    return Task::done(Message::InputChange(
-                        file.path().to_string_lossy().to_string(),
-                    ))
-                    .chain(Task::done(Message::Update));
-                }
+            Message::InputPicked(Some(file)) => {
+                return Task::done(Message::InputChange(
+                    file.path().to_string_lossy().to_string(),
+                ))
+                .chain(Task::done(Message::Update));
             }
-            Message::OutputPicked(opt) => {
-                if let Some(file) = opt {
-                    return Task::done(Message::OutputChange(
-                        file.path()
-                            // join instead of setting filename
-                            // since picked folder is interpreted as the filename here
-                            .join(
-                                Path::new(&self.media.output)
-                                    .file_name()
-                                    .unwrap_or_default(),
-                            )
-                            .to_string_lossy()
-                            .to_string(),
-                        false,
-                    ));
-                }
+            Message::OutputPicked(Some(file)) => {
+                return Task::done(Message::OutputChange(
+                    file.path()
+                        // join instead of setting filename
+                        // since picked folder is interpreted as the filename here
+                        .join(
+                            Path::new(&self.media.output)
+                                .file_name()
+                                .unwrap_or_default(),
+                        )
+                        .to_string_lossy()
+                        .to_string(),
+                    false,
+                ));
+            }
+            Message::InputPicked(None) | Message::OutputPicked(None) => {
+                eprintln!("no path received from picker");
             }
 
             Message::Update => return self.check_inputs(),
