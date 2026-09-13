@@ -114,7 +114,7 @@ impl State {
     fn new() -> (Self, Task<Message>) {
         ffmpeg::init().unwrap();
 
-        let state = State::default();
+        let state = Self::default();
 
         // Uses the first argument as the input file path,
         // and creates the output file path from it
@@ -143,7 +143,7 @@ impl State {
                 if self.input_exists {
                     match self.update_from_input() {
                         Err(e) => {
-                            eprintln!("failed to inspect input media '{}': {e}", self.media.input)
+                            eprintln!("failed to inspect input media '{}': {e}", self.media.input);
                         }
 
                         Ok(task) => return task,
@@ -165,7 +165,7 @@ impl State {
                         .inspect_err(|e| eprintln!("failed to check if output file exists: {e}"))
                     {
                         self.output_file_exists = exists;
-                    };
+                    }
                 }
             }
             Message::StartChange(val) => {
@@ -261,16 +261,16 @@ impl State {
             }
             Message::LoadedStartPreview(Err(e)) | Message::LoadedEndPreview(Err(e)) => {
                 if e != preview::Error::SameHash {
-                    eprintln!("failed to load preview: {e}")
+                    eprintln!("failed to load preview: {e}");
                 }
             }
 
             Message::AllocatedStartPreview(Ok(allocation)) => {
-                self.previews.start = Some(allocation)
+                self.previews.start = Some(allocation);
             }
             Message::AllocatedEndPreview(Ok(allocation)) => self.previews.end = Some(allocation),
             Message::AllocatedStartPreview(Err(e)) | Message::AllocatedEndPreview(Err(e)) => {
-                eprintln!("failed to allocate preview: {e}")
+                eprintln!("failed to allocate preview: {e}");
             }
 
             Message::PlayPreview => {
@@ -490,8 +490,8 @@ impl State {
                     Key::Character("s") => Some(Message::ToggleSubs),
                     Key::Character("e") => Some(Message::ToggleExtraStreams),
 
-                    Key::Character("i") | Key::Character("f") => Some(Message::PickInput),
-                    Key::Character("o") | Key::Character("d") => Some(Message::PickOutput),
+                    Key::Character("i" | "f") => Some(Message::PickInput),
+                    Key::Character("o" | "d") => Some(Message::PickOutput),
 
                     Key::Character("p") => Some(Message::PlayPreview),
 
@@ -550,7 +550,7 @@ impl State {
         ]))
     }
 
-    fn generate_output_path(&mut self) -> Task<Message> {
+    fn generate_output_path(&self) -> Task<Message> {
         let input_path = PathBuf::from(&self.media.input);
 
         Task::done(Message::OutputChange(
@@ -564,7 +564,7 @@ impl State {
     }
 
     /// makes a batch of `Task`s to create start and end preview images
-    /// no effect if use_video is false
+    /// no effect if `use_video` is false
     ///
     /// NOTE: determining `Preview`s is done in sync,
     /// so be very careful chaining this after tasks that change `self.media`

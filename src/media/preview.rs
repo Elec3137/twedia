@@ -20,15 +20,15 @@ pub enum Error {
 impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Raw(e) => e.fmt(f),
-            Error::SameHash => write!(f, "same encoded hash"),
-            Error::NoPackets => write!(f, "no valid packets in input"),
+            Self::Raw(e) => e.fmt(f),
+            Self::SameHash => write!(f, "same encoded hash"),
+            Self::NoPackets => write!(f, "no valid packets in input"),
         }
     }
 }
 impl From<ffmpeg::Error> for Error {
     fn from(value: ffmpeg::Error) -> Self {
-        Error::Raw(value)
+        Self::Raw(value)
     }
 }
 impl std::error::Error for Error {}
