@@ -82,7 +82,6 @@ impl Media {
         octx.write_header()?;
 
         let (mut first_pts, mut first_dts) = (None, None);
-        let mut first_loop = true;
 
         for (stream, mut packet) in ictx.packets() {
             assert_ne!(stream.time_base().numerator(), 0);
@@ -105,14 +104,23 @@ impl Media {
                 .expect("there should always be an output stream at this index");
             packet.rescale_ts(stream.time_base(), ost.time_base());
 
-            if first_loop {
+            if first_pts.is_none() {
                 first_pts = packet.pts();
+            }
+            if first_dts.is_none() {
                 first_dts = packet.dts();
-                first_loop = false;
             }
 
-            packet.set_pts(packet.pts().map(|i| i - first_pts.unwrap()));
-            packet.set_dts(packet.dts().map(|i| i - first_dts.unwrap()));
+            packet.set_pts(
+                packet
+                    .pts()
+                    .and_then(|ts| first_pts.map(|first| ts - first)),
+            );
+            packet.set_dts(
+                packet
+                    .dts()
+                    .and_then(|ts| first_dts.map(|first| ts - first)),
+            );
 
             packet.set_position(-1);
             packet.set_stream(ost_index as _);
