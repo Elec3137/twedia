@@ -84,7 +84,7 @@ impl Media {
         let (mut first_pts, mut first_dts) = (None, None);
 
         for (stream, mut packet) in ictx.packets() {
-            assert_ne!(stream.time_base().numerator(), 0);
+            debug_assert_ne!(stream.time_base().numerator(), 0);
 
             if packet
                 .pts()
