@@ -108,8 +108,16 @@ impl Media {
                 first_pts = packet.pts();
             }
             if first_dts.is_none() {
-                first_dts = packet.dts();
+                first_dts = match packet.dts() {
+                    Some(dts) => Some(dts),
+                    // use the pts if the dts is unavaliable
+                    None => first_pts,
+                };
             }
+            debug_assert!(
+                first_pts.is_some() && first_dts.is_some(),
+                "if these aren't set on the first loop, then at least the first packets in the output will not be either"
+            );
 
             packet.set_pts(
                 packet
