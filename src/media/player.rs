@@ -19,30 +19,29 @@ impl Player {
         audio: bool,
         subs: bool,
     ) -> io::Result<()> {
-        let start_arg = format!("--start={}", start);
-        let length_arg = format!("--length={}", length);
+        let mut command = process::Command::new(MPV_EXE);
 
-        let mut args = vec![
-            &start_arg,
-            &length_arg,
+        command.args([
+            &format!("--start={start}"),
+            &format!("--length={length}"),
             "--no-config",
             "--volume=70",
             "--player-operation-mode=pseudo-gui",
             "--keep-open",
             path,
-        ];
+        ]);
 
         if !video {
-            args.push("--video=no")
+            command.arg("--video=no");
         }
         if !audio {
-            args.push("--audio=no");
+            command.arg("--audio=no");
         }
         if !subs {
-            args.push("--sub=no");
+            command.arg("--sub=no");
         }
 
-        self.0 = Some(process::Command::new(MPV_EXE).args(args).spawn()?);
+        self.0 = Some(command.spawn()?);
 
         Ok(())
     }
