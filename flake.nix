@@ -23,6 +23,7 @@
         craneLib = inputs.crane.mkLib pkgs;
 
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
+        appId = cargoToml.package.metadata.bundle.identifier;
         name = cargoToml.package.name;
 
         dlDeps =
@@ -75,7 +76,7 @@
         crate =
           let
             desktopItem = pkgs.makeDesktopItem {
-              inherit name;
+              name = appId;
               desktopName = name;
               mimeTypes = cargoToml.package.metadata.bundle.linux_mime_types;
               icon = "image-x-generic";
@@ -105,14 +106,15 @@
         packages.default = crate;
 
         packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
+          inherit appId;
+          developer = "electria";
+
           package = crate.overrideAttrs (previousAttrs: {
             env = previousAttrs.env // {
               MPV_EXE = "/app/" + previousAttrs.env.MPV_EXE;
             };
           });
 
-          developer = "electria";
-          appId = cargoToml.package.metadata.bundle.identifier;
           runtime = "org.freedesktop.Platform/26.08";
           permissions = {
             devices = [
