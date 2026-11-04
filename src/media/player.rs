@@ -1,124 +1,51 @@
-use smol::{io, process};
+use std::{
+    env::{self},
+    ffi::OsStr,
+    fs, io,
+    path::{Path, PathBuf},
+};
 
 use super::Media;
 
-const MPV_EXE: &str = env!("MPV_EXE");
-
-/// A handle over mpv
 #[derive(Debug, Default)]
-pub struct Player(Option<process::Child>);
+pub struct Player {
+    last_tmp: Option<PathBuf>,
+}
 impl Player {
-    /// Spawns a new player,
-    /// discarding the handle to the previous one
-    pub fn play(
-        &mut self,
-        path: &str,
-        start: usize,
-        length: usize,
-        video: bool,
-        audio: bool,
-        subs: bool,
-    ) -> io::Result<()> {
-        let mut command = process::Command::new(MPV_EXE);
+    pub fn play(&mut self, mut media: Media) -> Result<(), Error> {
+        let tmp = env::temp_dir()
+            .join(
+                Path::new(&media.output)
+                    .file_name()
+                    .unwrap_or(OsStr::new("media.mkv")),
+            )
+            .with_extension("mp4");
+        media.output = tmp.to_string_lossy().to_string();
 
-        command.args([
-            &format!("--start={start}"),
-            &format!("--length={length}"),
-            "--no-config",
-            "--volume=70",
-            "--player-operation-mode=pseudo-gui",
-            "--keep-open",
-            path,
-        ]);
-
-        if !video {
-            command.arg("--video=no");
+        if let Some(path) = self.last_tmp.take() {
+            fs::remove_file(path)?;
         }
-        if !audio {
-            command.arg("--audio=no");
-        }
-        if !subs {
-            command.arg("--sub=no");
-        }
+        media.create()?;
 
-        self.0 = Some(command.spawn()?);
-
+        open::that(&tmp)?;
+        self.last_tmp = Some(tmp);
         Ok(())
-    }
-
-    fn is_active(&mut self) -> bool {
-        let is_active = match self.0 {
-            Some(ref mut child) => match &child.try_status() {
-                Ok(opt) => match opt {
-                    Some(status) => {
-                        if !status.success() {
-                            eprintln!("player failed with status: {status}");
-                        }
-                        false
-                    }
-                    None => true,
-                },
-                Err(e) => {
-                    eprintln!("failed to check status of player: {e}");
-                    false
-                }
-            },
-            None => false,
-        };
-
-        if !is_active {
-            self.0 = None;
-        }
-
-        is_active
-    }
-
-    fn kill(&mut self) -> io::Result<()> {
-        if let Some(ref mut child) = self.0 {
-            child.kill()
-        } else {
-            Ok(())
-        }
-    }
-
-    fn toggle(
-        &mut self,
-        path: &str,
-        start: usize,
-        length: usize,
-        video: bool,
-        audio: bool,
-        subs: bool,
-    ) {
-        if self.is_active() {
-            #[allow(unused_must_use)]
-            self.kill()
-                .inspect_err(|e| eprintln!("failed to kill player: {e}"));
-        } else {
-            #[allow(unused_must_use)]
-            self.play(path, start, length, video, audio, subs)
-                .inspect_err(|e| eprintln!("failed to play preview: {e}"));
-        }
-    }
-
-    /// Higher level function that calls `Self::toggle`
-    /// using the fields of the `Media` type.
-    ///
-    /// Note: does not use `Media::output` or `Media::use_extra_streams`
-    pub fn toggle_preview_of(&mut self, media: &Media) {
-        self.toggle(
-            &media.input,
-            media.start.round() as _,
-            (media.end - media.start).round() as _,
-            media.use_video,
-            media.use_audio,
-            media.use_subs,
-        );
     }
 }
 impl Drop for Player {
     fn drop(&mut self) {
-        #[allow(unused_must_use)]
-        self.kill();
+        if let Some(path) = self.last_tmp.take()
+            && let Err(e) = std::fs::remove_file(path)
+        {
+            eprintln!("failed to remove Player.last_tmp: {e}")
+        }
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum Error {
+    #[error("{0}")]
+    Io(#[from] io::Error),
+    #[error("{0}")]
+    FFmpeg(#[from] ffmpeg_next::Error),
 }

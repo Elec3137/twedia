@@ -24,6 +24,8 @@ use media::*;
 use player::Player;
 use preview::Preview;
 
+use crate::utils::Check;
+
 #[derive(Debug, Clone)]
 enum Message {
     InputChange(String),
@@ -274,7 +276,7 @@ impl State {
             }
 
             Message::PlayPreview => {
-                self.previews.player.toggle_preview_of(&self.media);
+                self.previews.player.play(self.media.clone()).check();
             }
 
             Message::WindowResized(new_size) => {
@@ -560,7 +562,11 @@ impl State {
     }
 
     fn instantiate(&self) -> Task<Message> {
-        Task::perform(self.media.clone().create(), Message::InstantiateFinished)
+        let cloned_media = self.media.clone();
+        Task::perform(
+            async move { cloned_media.create() },
+            Message::InstantiateFinished,
+        )
     }
 
     /// makes a batch of `Task`s to create start and end preview images

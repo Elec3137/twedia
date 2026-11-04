@@ -22,7 +22,7 @@ pub struct Media {
 
 impl Media {
     /// uses the parameters and the input to create the output
-    pub async fn create(self) -> Result<(), ffmpeg::Error> {
+    pub fn create(&self) -> Result<(), ffmpeg::Error> {
         let mut ictx = ffmpeg::format::input(&self.input)?;
         let mut octx = ffmpeg::format::output(&self.output)?;
 

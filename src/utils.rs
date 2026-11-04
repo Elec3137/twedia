@@ -62,3 +62,18 @@ impl PathBufExt for PathBuf {
         self
     }
 }
+
+pub trait Check {
+    /// just print the error (if it exists)
+    fn check(self);
+}
+impl<E> Check for Result<(), E>
+where
+    E: std::fmt::Display,
+{
+    fn check(self) {
+        if let Err(e) = self {
+            eprintln!("{e}");
+        }
+    }
+}
