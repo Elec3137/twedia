@@ -1,3 +1,5 @@
+cargo-features = ["profile-rustflags"]
+
 [package]
 name = "twedia"
 description = "the video editor for your pocket!"
@@ -27,6 +29,23 @@ iced_runtime = "0.14.0"
 rfd = "0.17.2"
 smol = "2.0.2"
 
+[profile.debug]
+debug = true
+strip = "none"
+debug-assertions = true
+overflow-checks = true
+
+[profile.dev]
+opt-level = 3
+rustflags = ["-Clink-arg=-fuse-ld=mold"]
+
+debug = false
+strip = "debuginfo"
+debug-assertions = false
+overflow-checks = false
+
 [profile.release]
-lto = true
+panic = "abort"
 codegen-units = 1
+lto = true
+strip = "symbols"

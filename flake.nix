@@ -151,7 +151,10 @@
           LD_LIBRARY_PATH = lib.makeLibraryPath dlDeps;
 
           inputsFrom = [ crate ];
-          packages = [ pkgs.rust-analyzer ];
+          packages = with pkgs; [
+            rust-analyzer
+            mold
+          ];
         };
       }
     );
