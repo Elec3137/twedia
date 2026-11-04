@@ -113,7 +113,7 @@
 
           developer = "electria";
           appId = cargoToml.package.metadata.bundle.identifier;
-          runtime = "org.gnome.Platform/49";
+          runtime = "org.freedesktop.Platform/26.08";
           permissions = {
             devices = [
               "dri"
