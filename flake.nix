@@ -36,7 +36,6 @@
             libx11
             libxcursor
             libxi
-            libxcb
           ]
           ++ lib.optionals stdenv.hostPlatform.isLinux [
             # libdbus, for rfd
