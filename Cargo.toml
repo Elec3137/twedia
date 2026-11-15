@@ -1,5 +1,3 @@
-cargo-features = ["profile-rustflags"]
-
 [package]
 name = "twedia"
 description = "the video editor for your pocket!"
@@ -37,7 +35,6 @@ overflow-checks = true
 
 [profile.dev]
 opt-level = 3
-rustflags = ["-Clink-arg=-fuse-ld=mold"]
 
 debug = false
 strip = "debuginfo"

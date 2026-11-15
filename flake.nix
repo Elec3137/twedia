@@ -144,8 +144,12 @@
         };
 
         devShells.default = craneLib.devShell {
-          inherit env;
-          LD_LIBRARY_PATH = lib.makeLibraryPath bin.runtimeDependencies;
+          env = env // {
+            RUSTFLAGS = builtins.concatStringsSep " " [
+              "-Clink-arg=-Wl,-rpath,${lib.makeLibraryPath bin.runtimeDependencies}"
+              "-Clink-arg=-fuse-ld=mold"
+            ];
+          };
 
           inputsFrom = [ bin ];
           packages = with pkgs; [
