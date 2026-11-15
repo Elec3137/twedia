@@ -26,25 +26,6 @@
         appId = cargoToml.package.metadata.bundle.identifier;
         name = cargoToml.package.name;
 
-        dlDeps =
-          with pkgs;
-          [
-            # needed for both x11 and wayland
-            libxkbcommon
-            libGL
-
-            libx11
-            libxcursor
-            libxi
-          ]
-          ++ lib.optionals stdenv.hostPlatform.isLinux [
-            # libdbus, for rfd
-            dbus.lib
-
-            vulkan-loader
-            wayland
-          ];
-
         env = {
           MPV_EXE = lib.getExe pkgs.mpv;
         };
@@ -91,7 +72,24 @@
                 pkgs.autoPatchelfHook
               ];
 
-              runtimeDependencies = dlDeps;
+              runtimeDependencies =
+                with pkgs;
+                [
+                  # needed for both x11 and wayland
+                  libxkbcommon
+                  libGL
+
+                  libx11
+                  libxcursor
+                  libxi
+                ]
+                ++ lib.optionals stdenv.hostPlatform.isLinux [
+                  # libdbus, for rfd
+                  dbus.lib
+
+                  vulkan-loader
+                  wayland
+                ];
 
               doCheck = false;
 
@@ -147,7 +145,7 @@
 
         devShells.default = craneLib.devShell {
           inherit env;
-          LD_LIBRARY_PATH = lib.makeLibraryPath dlDeps;
+          LD_LIBRARY_PATH = lib.makeLibraryPath bin.runtimeDependencies;
 
           inputsFrom = [ bin ];
           packages = with pkgs; [
