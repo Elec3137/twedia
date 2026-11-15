@@ -72,7 +72,7 @@
 
         # Build the actual crate itself,
         # reusing the dependency artifacts from above.
-        crate =
+        bin =
           let
             desktopItem = pkgs.makeDesktopItem {
               name = appId;
@@ -102,13 +102,13 @@
           );
       in
       {
-        packages.default = crate;
+        packages.default = bin;
 
         packages.flatpak = inputs.nix2flatpak.lib.${system}.mkFlatpak {
           inherit appId;
           developer = "electria";
 
-          package = crate.overrideAttrs (previousAttrs: {
+          package = bin.overrideAttrs (previousAttrs: {
             env = previousAttrs.env // {
               MPV_EXE = "/app/" + previousAttrs.env.MPV_EXE;
             };
@@ -128,7 +128,7 @@
         };
 
         checks = {
-          crate-clippy = craneLib.cargoClippy (
+          clippy = craneLib.cargoClippy (
             commonArgs
             // {
               inherit cargoArtifacts;
@@ -149,7 +149,7 @@
           inherit env;
           LD_LIBRARY_PATH = lib.makeLibraryPath dlDeps;
 
-          inputsFrom = [ crate ];
+          inputsFrom = [ bin ];
           packages = with pkgs; [
             rust-analyzer
             mold
