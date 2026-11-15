@@ -18,8 +18,8 @@
     inputs.flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = import inputs.nixpkgs { inherit system; };
-        lib = pkgs.lib;
+        pkgs = inputs.nixpkgs.legacyPackages.${system};
+        lib = inputs.nixpkgs.lib;
         craneLib = inputs.crane.mkLib pkgs;
 
         cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
