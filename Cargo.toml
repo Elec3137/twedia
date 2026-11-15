@@ -39,7 +39,6 @@ overflow-checks = true
 opt-level = 3
 
 debug = false
-strip = "debuginfo"
 debug-assertions = false
 overflow-checks = false
 
