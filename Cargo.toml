@@ -22,10 +22,12 @@ linux_mime_types = [
 
 [dependencies]
 ffmpeg-next = "9.0.0"
-iced = { version = "0.14.0", features = ["image-without-codecs", "smol"] }
 iced_runtime = "0.14.0"
 rfd = "0.17.2"
 smol = "2.0.2"
+[dependencies.iced]
+version = "0.14.0"
+features = ["image-without-codecs", "smol"]
 
 [profile.debug]
 debug = true
@@ -44,5 +46,5 @@ overflow-checks = false
 [profile.release]
 panic = "abort"
 codegen-units = 1
-lto = true
+lto = "fat"
 strip = "symbols"
