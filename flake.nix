@@ -144,6 +144,8 @@
         };
 
         devShells.default = craneLib.devShell {
+          inputsFrom = [ bin ];
+
           env = env // {
             RUSTFLAGS = builtins.concatStringsSep " " [
               "-Clink-arg=-Wl,-rpath,${lib.makeLibraryPath bin.runtimeDependencies}"
@@ -151,7 +153,6 @@
             ];
           };
 
-          inputsFrom = [ bin ];
           packages = with pkgs; [
             rust-analyzer
             mold
