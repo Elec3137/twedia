@@ -161,7 +161,7 @@ impl Media {
         self.use_extra_streams = context.nb_streams()
             > self.use_video as u32 + self.use_audio as u32 + self.use_subs as u32;
 
-        Ok(context.duration() as f64 / f64::from(ffmpeg::ffi::AV_TIME_BASE))
+        Ok((context.duration() as f64 / f64::from(ffmpeg::ffi::AV_TIME_BASE)).abs())
     }
 
     /// this function should make sure that the start and end values are reasonable,
